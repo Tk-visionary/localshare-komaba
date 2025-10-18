@@ -4,7 +4,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
-const bucket = admin.storage().bucket();
+const bucket = () => admin.storage().bucket();
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/', upload.single('image'), async (req: Request, res: Response) => {
@@ -12,7 +12,7 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded.' });
     }
-    const blob = bucket.file(`uploads/${uuidv4()}-${req.file.originalname}`);
+    const blob = bucket().file(`uploads/${uuidv4()}-${req.file.originalname}`);
     const blobStream = blob.createWriteStream({ metadata: { contentType: req.file.mimetype } });
     blobStream.on('error', (err) => res.status(500).json({ error: 'Upload failed' }));
     blobStream.on('finish', async () => {

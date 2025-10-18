@@ -4,7 +4,7 @@ import { body, validationResult } from 'express-validator';
 import { Item } from '../types.js';
 
 const router = express.Router();
-const db = admin.firestore();
+const db = () => admin.firestore();
 
 type CreateItemBody = Omit<Item, 'id' | 'postedAt' | 'isSoldOut' | 'user'>;
 
@@ -22,7 +22,7 @@ const itemValidationRules = [
 router.get('/', async (req: Request, res: Response<Item[] | { error: string }>, next: NextFunction) => {
   try {
     const { userId } = req.query;
-    let query: admin.firestore.Query = db.collection('items');
+    let query: admin.firestore.Query = db().collection('items');
     if (userId && typeof userId === 'string') {
       query = query.where('userId', '==', userId);
     }
@@ -37,7 +37,7 @@ router.get('/', async (req: Request, res: Response<Item[] | { error: string }>, 
 router.get('/:id', async (req: Request, res: Response<Item | { error: string }>, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const itemRef = db.collection('items').doc(id);
+    const itemRef = db().collection('items').doc(id);
     const doc = await itemRef.get();
 
     if (!doc.exists) {
@@ -59,7 +59,7 @@ router.post('/', itemValidationRules, async (req: Request<{}, {}, CreateItemBody
     const { exhibitorName, ...itemData } = req.body;
     const userId = req.user!.uid; // Get user ID from authenticated session
 
-    const userRef = db.collection('users').doc(userId);
+    const userRef = db().collection('users').doc(userId);
     // Update the user's name based on the exhibitor name they provided
     await userRef.set({ name: exhibitorName }, { merge: true });
 
@@ -77,7 +77,7 @@ router.post('/', itemValidationRules, async (req: Request<{}, {}, CreateItemBody
         isSoldOut: false,
     };
 
-    const docRef = await db.collection('items').add(newItem);
+    const docRef = await db().collection('items').add(newItem);
     res.status(201).json({ id: docRef.id, ...newItem });
   } catch (error) {
     next(error);
@@ -103,16 +103,11 @@ router.put('/:id', updateItemValidationRules, async (req: Request<{ id: string }
     }
     try {
         const { id } = req.params;
-        const itemRef = db.collection('items').doc(id);
+        const itemRef = db().collection('items').doc(id);
         const doc = await itemRef.get();
 
         if (!doc.exists) {
             return res.status(404).json({ error: 'Item not found' });
-        }
-
-        // Ownership check
-        if (doc.data()!.userId !== req.user!.uid) {
-            return res.status(403).json({ error: { message: 'Forbidden: You do not own this item.' } });
         }
 
         // Ownership check
@@ -145,11 +140,18 @@ router.put('/:id', updateItemValidationRules, async (req: Request<{ id: string }
 router.delete('/:id', async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
-        const itemRef = db.collection('items').doc(id);
+        const itemRef = db().collection('items').doc(id);
         const doc = await itemRef.get();
+
         if (!doc.exists) {
             return res.status(404).json({ error: 'Item not found' });
         }
+
+        // Ownership check
+        if (doc.data()!.userId !== req.user!.uid) {
+            return res.status(403).json({ error: { message: 'Forbidden: You do not own this item.' } });
+        }
+
         await itemRef.delete();
         res.status(204).end();
     } catch (error) {
