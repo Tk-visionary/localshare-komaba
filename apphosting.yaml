@@ -1,0 +1,16 @@
+# Specifies the version of the App Hosting schema.
+schemaVersion: v1alpha1
+
+# Defines the environment variables and secrets that are available to your app.
+runConfig:
+  # Defines the environment variables that are available to your app.
+  environmentVariables:
+    NODE_ENV: production
+  # Defines the secrets that are available to your app.
+  secrets:
+    - secret: FIREBASE_SERVICE_ACCOUNT
+
+# Defines the settings for your app's build process.
+buildConfig:
+  # Specifies the command to build your app.
+  buildCommand: npm run build
