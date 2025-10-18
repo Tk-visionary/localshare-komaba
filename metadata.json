@@ -1,0 +1,5 @@
+{
+  "name": "LocalShare (駒場祭 特化版)",
+  "description": "A web platform for sharing and selling surplus stock from stalls at the Komaba Festival, allowing exhibitors to easily list items and attendees to find them in real-time.",
+  "requestFramePermissions": []
+}

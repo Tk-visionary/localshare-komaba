@@ -1,0 +1,88 @@
+import React from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
+import * as api from '../services/itemApi';
+import { ITEM_STATUS } from '../constants';
+import { Item } from '../types';
+import ItemCard from '../components/ItemCard';
+
+interface MyItemsPageProps {}
+
+const MyItemsPage: React.FC<MyItemsPageProps> = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const { data: myItems = [], isLoading, isError, error } = useQuery<Item[], Error>({
+    queryKey: ['items', user?.id],
+    queryFn: () => api.fetchItems(user!.id),
+    enabled: !!user,
+  });
+
+  const updateItemMutation = useMutation<Item, Error, { id: string; data: Partial<Item> }>({
+    mutationFn: ({ id, data }) => api.updateItem(id, data),
+    onSuccess: (data) => {
+      const newStatus = data.isSoldOut ? ITEM_STATUS.SOLD_OUT : ITEM_STATUS.AVAILABLE;
+      toast.success(`商品を「${newStatus}」に更新しました。`);
+      queryClient.invalidateQueries({ queryKey: ['items', user?.id] });
+    },
+    onError: (error) => {
+      toast.error(`ステータスの更新に失敗しました: ${error.message}`);
+    },
+  });
+
+  const deleteItemMutation = useMutation<void, Error, string>({
+    mutationFn: (id: string) => api.deleteItemById(id),
+    onSuccess: () => {
+      toast.success('商品を削除しました。');
+      queryClient.invalidateQueries({ queryKey: ['items', user?.id] });
+    },
+    onError: (error) => {
+      toast.error(`商品の削除に失敗しました: ${error.message}`);
+    },
+  });
+
+  const handleToggleSoldOut = (id: string, newStatus: boolean) => {
+    updateItemMutation.mutate({ id, data: { isSoldOut: newStatus } });
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('この商品を本当に削除しますか？')) {
+      deleteItemMutation.mutate(id);
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/edit-item/${id}`);
+  };
+
+  if (isLoading) return <div className="flex justify-center items-center h-64"><div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-komaba-orange"></div></div>;
+  if (isError) return <div className="text-center text-red-500 mt-8">商品の読み込みに失敗しました: {error.message}</div>;
+
+  return (
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">マイ出品リスト</h1>
+      {myItems.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {myItems.map(item => (
+            <ItemCard 
+              key={item.id} 
+              item={item}
+              onToggleSoldOut={handleToggleSoldOut}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center text-gray-500 mt-8 bg-white p-8 rounded-lg shadow-lg">
+          <p>まだ出品した商品はありません。</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MyItemsPage;
