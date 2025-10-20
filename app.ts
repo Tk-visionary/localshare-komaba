@@ -54,7 +54,7 @@ app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
-        "script-src": ["'self'", "https://cdn.tailwindcss.com", "'unsafe-inline'"],
+        "script-src": ["'self'", "https://cdn.tailwindcss.com", "https://apis.google.com", "'unsafe-inline'"],
         "style-src": ["'self'", "'unsafe-inline'"],
       },
     },
