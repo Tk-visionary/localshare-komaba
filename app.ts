@@ -1,5 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import admin from 'firebase-admin';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -44,6 +46,9 @@ if (admin.apps.length === 0) {
 const db = admin.firestore();
 const bucket = admin.storage().bucket();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 app.use(helmet());
 app.use(morgan('combined'));
@@ -58,6 +63,8 @@ app.use(cors({
   }
 }));
 
+app.use(express.static(path.join(__dirname, 'client')));
+
 import uploadRoutes from './routes/upload.js';
 
 app.use('/upload', uploadRoutes);
@@ -66,6 +73,10 @@ import itemRoutes from './routes/items.js';
 import { firebaseAuthMiddleware } from './middleware/auth.js';
 
 app.use('/api/items', firebaseAuthMiddleware, itemRoutes);
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'index.html'));
+});
 
 // Centralized error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

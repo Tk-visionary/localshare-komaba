@@ -5,6 +5,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   // Only expose VITE_ prefixed variables to the client
   return {
+    build: {
+      outDir: 'dist/client'
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
