@@ -77,7 +77,7 @@ app.use(express.static(path.join(__dirname, 'client')));
 
 import uploadRoutes from './routes/upload.js';
 
-app.use('/upload', uploadRoutes);
+app.use('/upload', firebaseAuthMiddleware, uploadRoutes);
 
 import itemRoutes from './routes/items.js';
 import { firebaseAuthMiddleware } from './middleware/auth.js';
