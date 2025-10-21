@@ -77,8 +77,15 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-500 mt-8 bg-white p-8 rounded-lg shadow-lg">
-          <p>まだ出品した商品はありません。</p>
+        <div className="text-center mt-12 bg-white p-10 rounded-xl shadow-lg max-w-lg mx-auto">
+          <h2 className="text-2xl font-bold text-gray-700 mb-3">まだ出品した商品はありません</h2>
+          <p className="text-gray-500 mb-6">最初の商品を出品して、他の人にシェアしましょう！</p>
+          <button
+            onClick={() => navigate('/post-item')}
+            className="bg-komaba-orange hover:bg-komaba-orange-dark text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-md hover:shadow-lg"
+          >
+            最初の商品を出品する
+          </button>
         </div>
       )}
     </div>
