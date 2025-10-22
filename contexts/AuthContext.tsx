@@ -5,10 +5,15 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { User } from '../types';
 
 interface AuthContextType {
-  user: User | null;
+  currentUser: User | null;
   loading: boolean;
-  login: () => Promise<void>;
+  signup: (email: string, password: string) => Promise<UserCredential>;
+  login: (email: string, password: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  loadingGoogleSignIn: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,12 +70,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const userRef = doc(db, 'users', firebaseUser.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-            setUser(userSnap.data() as User);
+            setCurrentUser(userSnap.data() as User);
         } else {
             // Create a new user document in Firestore if it doesn't exist
             const newUser = mapFirebaseUserToAppUser(firebaseUser);
             await setDoc(userRef, newUser);
-            setUser(newUser);
+            setCurrentUser(newUser);
         }
       } else {
         setUser(null);
@@ -81,25 +86,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => unsubscribe();
   }, []);
 
-  const login = async () => {
-    setLoading(true);
-    try {
-      await signInWithPopup(auth, googleProvider);
-      // onAuthStateChanged will handle setting the user
-    } catch (error) {
-      console.error("Login failed:", error);
-      setLoading(false);
-    }
-  };
 
-  const logout = async () => {
-    try {
-      await signOut(auth);
-      // onAuthStateChanged will handle setting the user to null
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
+
+
 
   const value = {
     currentUser,
