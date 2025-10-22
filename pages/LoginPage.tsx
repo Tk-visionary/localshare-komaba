@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { APP_NAME } from '../constants';
 
 const LoginPage: React.FC = () => {
-    const { user, login, loading } = useAuth();
+    const { user, login, loading, loadingGoogleSignIn, error } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {

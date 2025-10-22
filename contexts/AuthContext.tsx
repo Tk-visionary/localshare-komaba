@@ -25,8 +25,39 @@ const mapFirebaseUserToAppUser = (firebaseUser: FirebaseUser): User => {
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingGoogleSignIn, setLoadingGoogleSignIn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const signup = (email: string, password: string) => {
+    return createUserWithEmailAndPassword(auth, email, password);
+  };
+
+  const login = (email: string, password: string) => {
+    return signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const logout = () => {
+    return signOut(auth);
+  };
+
+  const signInWithGoogle = async () => {
+    setLoadingGoogleSignIn(true);
+    setError(null);
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error: any) {
+      setError(error.message);
+      throw error;
+    } finally {
+      setLoadingGoogleSignIn(false);
+    }
+  };
+
+  const resetPassword = (email: string) => {
+    return sendPasswordResetEmail(auth, email);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -70,7 +101,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const value = { user, loading, login, logout };
+  const value = {
+    currentUser,
+    signup,
+    login,
+    logout,
+    signInWithGoogle,
+    resetPassword,
+    loadingGoogleSignIn,
+    error,
+  };
 
   return (
     <AuthContext.Provider value={value}>
