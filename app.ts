@@ -54,7 +54,7 @@ app.use(cors({
   }
 }));
 
-app.use(express.static(path.join(__dirname, '..', 'client')));
+app.use(express.static(path.join(__dirname, 'client')));
 
 import uploadRoutes from './routes/upload.js';
 
