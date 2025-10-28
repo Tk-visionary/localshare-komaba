@@ -18,28 +18,8 @@ if (admin.apps.length === 0) {
     admin.initializeApp();
   } else {
     console.log("Attempting to initialize Firebase Admin SDK in production mode...");
-    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
-
-    if (!serviceAccountString) {
-      console.error("CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
-      throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable is not set.');
-    } else {
-      console.log("FIREBASE_SERVICE_ACCOUNT is set. Type:", typeof serviceAccountString);
-      // Log a small, non-sensitive part to verify it's not empty
-      console.log("First 10 chars:", serviceAccountString.substring(0, 10)); 
-    }
-
-    try {
-      const serviceAccount = JSON.parse(serviceAccountString);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-        storageBucket: 'localshare-komaba.appspot.com'
-      });
-      console.log("Firebase Admin SDK initialized successfully.");
-    } catch (e) {
-      console.error("CRITICAL: Failed to parse FIREBASE_SERVICE_ACCOUNT. It may be malformed JSON.", e);
-      throw e;
-    }
+    admin.initializeApp();
+    console.log("Firebase Admin SDK initialized successfully.");
   }
 }
 
