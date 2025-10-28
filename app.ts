@@ -26,8 +26,7 @@ if (admin.apps.length === 0) {
 const db = admin.firestore();
 const bucket = admin.storage().bucket();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.resolve();
 
 const app = express();
 app.use(
@@ -54,7 +53,7 @@ app.use(cors({
   }
 }));
 
-app.use(express.static(path.join(__dirname, 'client')));
+app.use(express.static(path.join(__dirname, 'dist/client')));
 
 import uploadRoutes from './routes/upload.js';
 
@@ -66,7 +65,7 @@ import { firebaseAuthMiddleware } from './middleware/auth.js';
 app.use('/api/items', firebaseAuthMiddleware, itemRoutes);
 
 app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'index.html'), { headers: { 'Content-Type': 'text/html' } });
+  res.sendFile(path.join(__dirname, 'dist/client', 'index.html'), { headers: { 'Content-Type': 'text/html' } });
 });
 
 // Centralized error handler
