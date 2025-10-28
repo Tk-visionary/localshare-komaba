@@ -6,6 +6,7 @@ runConfig:
   # Defines the environment variables that are available to your app.
   environmentVariables:
     NODE_ENV: production
+    FIREBASE_WEBAPP_CONFIG: "{\"projectId\":\"localshare-komaba-54c0d\",\"appId\":\"1:371696877911:web:d29c5fc0c892242741fe12\",\"storageBucket\":\"localshare-komaba-54c0d.firebasestorage.app\",\"apiKey\":\"***REMOVED***\",\"authDomain\":\"localshare-komaba-54c0d.firebaseapp.com\",\"messagingSenderId\":\"371696877911\",\"measurementId\":\"G-87V6HZ6G17\",\"projectNumber\":\"371696877911\",\"version\":\"2\"}"
   # Defines the secrets that are available to your app.
   secrets:
     - secret: FIREBASE_SERVICE_ACCOUNT
