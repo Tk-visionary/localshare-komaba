@@ -22,21 +22,32 @@ async function timeoutPromise<T>(ms: number, p: Promise<T>) {
   }
 }
 
+const getToken = () => {
+  return new Promise<string | null>((resolve, reject) => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      unsubscribe();
+      if (user) {
+        user.getIdToken().then(token => {
+          resolve(token);
+        }).catch(error => {
+          reject(error);
+        });
+      } else {
+        resolve(null);
+      }
+    });
+  });
+};
+
 export async function fetchJson(input: RequestInfo, init?: RequestInit, timeout = DEFAULT_TIMEOUT) {
-  const user = auth.currentUser;
+  const token = await getToken();
   let headers = init?.headers || {};
 
-  if (user) {
-    try {
-      const token = await user.getIdToken();
-      headers = {
-        ...headers,
-        'Authorization': `Bearer ${token}`,
-      };
-    } catch (error) {
-      console.error('Failed to get auth token:', error);
-      // Optionally handle the error, e.g., by redirecting to login
-    }
+  if (token) {
+    headers = {
+      ...headers,
+      'Authorization': `Bearer ${token}`,
+    };
   }
 
   const finalInit = { ...init, headers };
