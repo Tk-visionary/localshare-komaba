@@ -20,6 +20,7 @@ if (admin.apps.length === 0) {
     admin.initializeApp();
   } else {
     console.log("Attempting to initialize Firebase Admin SDK in production mode...");
+    console.log("Raw FIREBASE_WEBAPP_CONFIG:", process.env.FIREBASE_WEBAPP_CONFIG); // Log raw value
     if (process.env.FIREBASE_WEBAPP_CONFIG) {
       try {
         const firebaseConfig = JSON.parse(process.env.FIREBASE_WEBAPP_CONFIG);
