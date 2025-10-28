@@ -20,8 +20,23 @@ if (admin.apps.length === 0) {
     admin.initializeApp();
   } else {
     console.log("Attempting to initialize Firebase Admin SDK in production mode...");
-    admin.initializeApp();
-    console.log("Firebase Admin SDK initialized successfully.");
+    if (process.env.FIREBASE_WEBAPP_CONFIG) {
+      try {
+        const firebaseConfig = JSON.parse(process.env.FIREBASE_WEBAPP_CONFIG);
+        admin.initializeApp({
+          credential: admin.credential.cert(firebaseConfig)
+        });
+        console.log("Firebase Admin SDK initialized successfully using FIREBASE_WEBAPP_CONFIG.");
+      } catch (error) {
+        console.error("Error parsing FIREBASE_WEBAPP_CONFIG:", error);
+        // Fallback to default initialization if parsing fails
+        admin.initializeApp();
+        console.log("Firebase Admin SDK initialized with default credentials due to config error.");
+      }
+    } else {
+      admin.initializeApp();
+      console.log("Firebase Admin SDK initialized successfully with default credentials.");
+    }
   }
 }
 
