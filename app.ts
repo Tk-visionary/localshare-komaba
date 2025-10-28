@@ -66,7 +66,7 @@ import { firebaseAuthMiddleware } from './middleware/auth.js';
 app.use('/api/items', firebaseAuthMiddleware, itemRoutes);
 
 app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'index.html'));
+  res.sendFile(path.join(__dirname, 'client', 'index.html'), { headers: { 'Content-Type': 'text/html' } });
 });
 
 // Centralized error handler
