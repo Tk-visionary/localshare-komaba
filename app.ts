@@ -13,7 +13,6 @@ import { firebaseAuthMiddleware } from './middleware/auth.js';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env';
 dotenv.config({ path: envFile });
-console.log("FIREBASE_WEBAPP_CONFIG", process.env.FIREBASE_WEBAPP_CONFIG);
 
 // --- Firebase 初期化 ---
 if (admin.apps.length === 0) {
@@ -70,9 +69,7 @@ app.use(cors({
 }));
 
 // --- 静的ファイル配信 ---
-console.log("__dirname", __dirname);
-console.log("Static path", path.join(__dirname, "client"));
-app.use(express.static(path.join(__dirname, 'client')));
+app.use(express.static(path.join(__dirname, "client")));
 
 // --- ルーティング ---
 app.use('/upload', firebaseAuthMiddleware, uploadRoutes);
