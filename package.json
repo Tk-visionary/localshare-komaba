@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite & npm run server",
-    "build": "vite build && $(npm bin)/tsc --project tsconfig.server.json",
+    "build": "vite build && npx tsc --project tsconfig.server.json",
     "preview": "vite preview",
     "server": "ts-node-dev --respawn --transpile-only server.ts",
     "start": "node dist/server.js",
