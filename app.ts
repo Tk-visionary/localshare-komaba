@@ -13,6 +13,7 @@ import { firebaseAuthMiddleware } from './middleware/auth.js';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env';
 dotenv.config({ path: envFile });
+console.log("FIREBASE_WEBAPP_CONFIG", process.env.FIREBASE_WEBAPP_CONFIG);
 
 // --- Firebase 初期化 ---
 if (admin.apps.length === 0) {
