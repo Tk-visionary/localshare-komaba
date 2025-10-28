@@ -69,6 +69,8 @@ app.use(cors({
 }));
 
 // --- 静的ファイル配信 ---
+console.log("__dirname", __dirname);
+console.log("Static path", path.join(__dirname, "client"));
 app.use(express.static(path.join(__dirname, 'client')));
 
 // --- ルーティング ---
