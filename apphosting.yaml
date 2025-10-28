@@ -14,3 +14,5 @@ runConfig:
 buildConfig:
   # Specifies the command to build your app.
   buildCommand: npm run build
+  environmentVariables:
+    GOOGLE_NODE_RUN_SCRIPTS: ""
