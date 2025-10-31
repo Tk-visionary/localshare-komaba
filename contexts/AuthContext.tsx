@@ -92,7 +92,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const value = {
     currentUser,
-    loading,
     signup,
     login,
     logout,
