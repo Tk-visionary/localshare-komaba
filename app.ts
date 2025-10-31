@@ -55,6 +55,7 @@ app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
+        "default-src": ["'self'"],
         "script-src": [
           "'self'",
           "https://cdn.tailwindcss.com",
@@ -66,8 +67,13 @@ app.use(
           "'unsafe-inline'",
         ],
         "style-src": ["'self'", "https://aistudiocdn.com", "'unsafe-inline'"],
+        "style-src-elem": ["'self'", "https://aistudiocdn.com", "'unsafe-inline'"],
+        "font-src": ["'self'", "https://aistudiocdn.com", "data:"],
+        "img-src": ["'self'", "data:", "https:", "blob:"],
         "connect-src": ["'self'", "https://*.firebaseio.com", "https://www.googleapis.com", "https://aistudiocdn.com"],
-        "frame-src": ["'self'", "localshare-komaba-54c0d.firebaseapp.com"],
+        "frame-src": ["'self'", "https://localshare-komaba-54c0d.firebaseapp.com"],
+        "object-src": ["'none'"],
+        "base-uri": ["'self'"],
       },
     },
   })
