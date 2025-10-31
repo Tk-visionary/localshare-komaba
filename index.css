@@ -1,3 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Komaba Festival Colors */
+  --color-komaba-background: #f0f0f0;
+  --color-komaba-orange: #EC6F3B;
+  --color-komaba-orange-light: rgba(236, 111, 59, 0.25);
+  --color-komaba-header: #2F4F4F;
+  --color-komaba-teal: #00796B;
+
+  /* University of Tokyo Colors */
+  --color-ut-blue: #0B8BEE;
+  --color-ginkgo-yellow: #FFCD00;
+}
