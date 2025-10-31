@@ -70,7 +70,7 @@ app.use(
         "style-src-elem": ["'self'", "https://aistudiocdn.com", "'unsafe-inline'"],
         "font-src": ["'self'", "https://aistudiocdn.com", "data:"],
         "img-src": ["'self'", "data:", "https:", "blob:"],
-        "connect-src": ["'self'", "https://*.firebaseio.com", "https://www.googleapis.com", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://firestore.googleapis.com", "https://aistudiocdn.com"],
+        "connect-src": ["'self'", "https://*.firebaseio.com", "https://*.googleapis.com", "https://aistudiocdn.com"],
         "frame-src": ["'self'", "https://localshare-komaba-54c0d.firebaseapp.com"],
         "object-src": ["'none'"],
         "base-uri": ["'self'"],
