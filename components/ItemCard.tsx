@@ -15,15 +15,15 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onToggleSoldOut, onDelete, on
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out relative">
       {item.isSoldOut && (
-        <div className="absolute inset-0 bg-black bg-opacity-10 flex items-center justify-center z-10">
-          <span className="text-white text-2xl font-bold transform -rotate-12 border-4 border-white px-4 py-2">{ITEM_STATUS.SOLD_OUT}</span>
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+          <span className="text-white text-2xl font-bold transform -rotate-12 border-4 border-white px-4 py-2 bg-red-500 shadow-lg">{ITEM_STATUS.SOLD_OUT}</span>
         </div>
       )}
-      
+
       {/* This wrapper div is crucial. It contains both the dimmed content and the always-interactive footer. */}
       <div>
         {/* This div contains only the content that should be dimmed when sold out. */}
-        <div className={`${item.isSoldOut ? 'opacity-60' : ''}`}>
+        <div className={`${item.isSoldOut ? 'filter grayscale opacity-75' : ''}`}>
           <img src={item.imageUrl} alt={item.name} className="w-full h-48 object-cover" />
           <div className="p-4">
             <div className="flex justify-between items-start">
