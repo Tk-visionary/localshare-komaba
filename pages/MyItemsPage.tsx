@@ -11,14 +11,14 @@ import ItemCard from '../components/ItemCard';
 interface MyItemsPageProps {}
 
 const MyItemsPage: React.FC<MyItemsPageProps> = () => {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const { data: myItems = [], isLoading, isError, error } = useQuery<Item[], Error>({
-    queryKey: ['items', user?.id],
-    queryFn: () => api.fetchItems(user!.id),
-    enabled: !!user,
+    queryKey: ['items', currentUser?.id],
+    queryFn: () => api.fetchItems(currentUser!.id),
+    enabled: !!currentUser,
   });
 
   const updateItemMutation = useMutation<Item, Error, { id: string; data: Partial<Item> }>({
@@ -26,7 +26,7 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
     onSuccess: (data) => {
       const newStatus = data.isSoldOut ? ITEM_STATUS.SOLD_OUT : ITEM_STATUS.AVAILABLE;
       toast.success(`商品を「${newStatus}」に更新しました。`);
-      queryClient.invalidateQueries({ queryKey: ['items', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['items', currentUser?.id] });
     },
     onError: (error) => {
       toast.error(`ステータスの更新に失敗しました: ${error.message}`);
@@ -37,7 +37,7 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
     mutationFn: (id: string) => api.deleteItemById(id),
     onSuccess: () => {
       toast.success('商品を削除しました。');
-      queryClient.invalidateQueries({ queryKey: ['items', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['items', currentUser?.id] });
     },
     onError: (error) => {
       toast.error(`商品の削除に失敗しました: ${error.message}`);
