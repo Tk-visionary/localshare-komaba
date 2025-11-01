@@ -46,10 +46,18 @@ router.get('/', async (req: Request, res: Response<Item[] | { error: string }>, 
   try {
     const { userId } = req.query;
     let query: admin.firestore.Query = db().collection('items');
+
     if (userId && typeof userId === 'string') {
+      console.log(`Fetching items for userId: ${userId}`);
       query = query.where('userId', '==', userId);
     }
-    const itemsSnapshot = await query.orderBy('postedAt', 'desc').get();
+
+    query = query.orderBy('postedAt', 'desc');
+
+    console.log('Executing Firestore query...');
+    const itemsSnapshot = await query.get();
+    console.log(`Found ${itemsSnapshot.docs.length} items`);
+
     const items: Item[] = itemsSnapshot.docs.map(doc => {
       try {
         const data = convertTimestamps(doc.data());
@@ -61,9 +69,25 @@ router.get('/', async (req: Request, res: Response<Item[] | { error: string }>, 
       }
     });
     res.json(items);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching items:', error);
-    next(error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+
+    // Return detailed error for Firestore index errors
+    if (error.code === 9 || error.message?.includes('index')) {
+      return res.status(500).json({
+        error: 'Database index required',
+        message: error.message,
+        details: 'Please check server logs for index creation link'
+      });
+    }
+
+    // Return generic error
+    return res.status(500).json({
+      error: 'Failed to fetch items',
+      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message
+    });
   }
 });
 
