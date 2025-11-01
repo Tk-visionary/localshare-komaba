@@ -98,8 +98,10 @@ app.use(cors({
 app.use(express.static(path.join(__dirname, "client")));
 
 // --- ルーティング ---
+// Upload always requires authentication
 app.use('/upload', firebaseAuthMiddleware, uploadRoutes);
-app.use('/api/items', firebaseAuthMiddleware, itemRoutes);
+// Items routes handle authentication per-route (GET is public, POST/PUT/DELETE require auth)
+app.use('/api/items', itemRoutes);
 
 // --- SPA fallback ---
 app.get(/.*/, (req, res) => {
