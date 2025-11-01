@@ -10,9 +10,21 @@ const db = () => admin.firestore();
 const convertTimestamps = (data: any): any => {
   if (!data) return data;
   const converted = { ...data };
-  if (converted.postedAt && typeof converted.postedAt.toDate === 'function') {
-    converted.postedAt = converted.postedAt.toDate().toISOString();
+
+  // Handle postedAt timestamp
+  if (converted.postedAt) {
+    if (typeof converted.postedAt.toDate === 'function') {
+      converted.postedAt = converted.postedAt.toDate().toISOString();
+    } else if (typeof converted.postedAt === 'string') {
+      // Already a string, keep as is
+      converted.postedAt = converted.postedAt;
+    } else {
+      // Fallback to current date if timestamp is invalid
+      console.warn('Invalid postedAt timestamp:', converted.postedAt);
+      converted.postedAt = new Date().toISOString();
+    }
   }
+
   return converted;
 };
 
@@ -38,11 +50,18 @@ router.get('/', async (req: Request, res: Response<Item[] | { error: string }>, 
     }
     const itemsSnapshot = await query.orderBy('postedAt', 'desc').get();
     const items: Item[] = itemsSnapshot.docs.map(doc => {
-      const data = convertTimestamps(doc.data());
-      return { id: doc.id, ...data } as Item;
+      try {
+        const data = convertTimestamps(doc.data());
+        return { id: doc.id, ...data } as Item;
+      } catch (err) {
+        console.error(`Error converting timestamps for item ${doc.id}:`, err);
+        // Return the item with raw data if conversion fails
+        return { id: doc.id, ...doc.data() } as Item;
+      }
     });
     res.json(items);
   } catch (error) {
+    console.error('Error fetching items:', error);
     next(error);
   }
 });
