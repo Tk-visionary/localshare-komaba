@@ -20,34 +20,32 @@ if (admin.apps.length === 0) {
     admin.initializeApp();
   } else {
     console.log("Attempting to initialize Firebase Admin SDK in production mode...");
-    console.log("Raw FIREBASE_WEBAPP_CONFIG:", process.env.FIREBASE_WEBAPP_CONFIG); // Log raw value
+
     if (process.env.FIREBASE_WEBAPP_CONFIG) {
       try {
         const firebaseConfig = JSON.parse(process.env.FIREBASE_WEBAPP_CONFIG);
+        // Extract project_id from service account config
+        const projectId = firebaseConfig.project_id;
+        // Default Firebase storage bucket is {projectId}.appspot.com
+        const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`;
+
         admin.initializeApp({
           credential: admin.credential.cert(firebaseConfig),
-          storageBucket: process.env.FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket
+          storageBucket: storageBucket
         });
-        console.log("Firebase Admin SDK initialized successfully using FIREBASE_WEBAPP_CONFIG.");
+        console.log(`Firebase Admin SDK initialized successfully. Storage bucket: ${storageBucket}`);
       } catch (error) {
         console.error("Error parsing FIREBASE_WEBAPP_CONFIG:", error);
         // Fallback to default initialization if parsing fails
-        admin.initializeApp({
-          storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-        });
+        admin.initializeApp();
         console.log("Firebase Admin SDK initialized with default credentials due to config error.");
       }
     } else {
-      admin.initializeApp({
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-      });
+      admin.initializeApp();
       console.log("Firebase Admin SDK initialized successfully with default credentials.");
     }
   }
 }
-
-const db = admin.firestore();
-const bucket = admin.storage().bucket();
 
 // --- __dirname 対応（ESM用） ---
 const __filename = fileURLToPath(import.meta.url);
