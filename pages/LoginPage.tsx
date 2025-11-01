@@ -16,7 +16,7 @@ const LoginPage: React.FC = () => {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();
-      navigate('/my-items');
+      // Navigation is handled by useEffect when currentUser changes
     } catch (err) {
       console.error('Failed to sign in with Google', err);
     }
