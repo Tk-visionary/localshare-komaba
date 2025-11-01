@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { APP_NAME, APP_SUBTITLE } from '../constants';
 
 const Header: React.FC = () => {
-  const { user, logout, loading } = useAuth();
+  const { currentUser, logout, loading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }): string =>
@@ -42,11 +42,11 @@ const Header: React.FC = () => {
             <div className="hidden md:block">
               {loading ? (
                 <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-white"></div>
-              ) : user ? (
+              ) : currentUser ? (
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center">
-                    <img src={user.picture} alt={user.name} className="h-8 w-8 rounded-full" />
-                    <span className="ml-2 text-sm font-medium">{user.name}</span>
+                    <img src={currentUser.picture} alt={currentUser.name} className="h-8 w-8 rounded-full" />
+                    <span className="ml-2 text-sm font-medium">{currentUser.name}</span>
                   </div>
                   <button
                     onClick={logout}
@@ -100,13 +100,13 @@ const Header: React.FC = () => {
                  <div className="flex justify-center items-center h-10 px-5">
                     <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-white"></div>
                  </div>
-              ) : user ? (
+              ) : currentUser ? (
                 <div className="flex items-center justify-between px-5">
                   <div className="flex items-center">
-                    <img className="h-10 w-10 rounded-full" src={user.picture} alt={user.name} />
+                    <img className="h-10 w-10 rounded-full" src={currentUser.picture} alt={currentUser.name} />
                     <div className="ml-3">
-                      <div className="text-base font-medium leading-none text-white">{user.name}</div>
-                      <div className="text-sm font-medium leading-none text-gray-400 mt-1">{user.email}</div>
+                      <div className="text-base font-medium leading-none text-white">{currentUser.name}</div>
+                      <div className="text-sm font-medium leading-none text-gray-400 mt-1">{currentUser.email}</div>
                     </div>
                   </div>
                   <button
