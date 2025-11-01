@@ -25,17 +25,22 @@ if (admin.apps.length === 0) {
       try {
         const firebaseConfig = JSON.parse(process.env.FIREBASE_WEBAPP_CONFIG);
         admin.initializeApp({
-          credential: admin.credential.cert(firebaseConfig)
+          credential: admin.credential.cert(firebaseConfig),
+          storageBucket: process.env.FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket
         });
         console.log("Firebase Admin SDK initialized successfully using FIREBASE_WEBAPP_CONFIG.");
       } catch (error) {
         console.error("Error parsing FIREBASE_WEBAPP_CONFIG:", error);
         // Fallback to default initialization if parsing fails
-        admin.initializeApp();
+        admin.initializeApp({
+          storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+        });
         console.log("Firebase Admin SDK initialized with default credentials due to config error.");
       }
     } else {
-      admin.initializeApp();
+      admin.initializeApp({
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+      });
       console.log("Firebase Admin SDK initialized successfully with default credentials.");
     }
   }
@@ -108,7 +113,10 @@ app.get(/.*/, (req, res) => {
 // --- エラーハンドラ ---
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('Unhandled error:', err.stack);
-  res.status(500).json({ error: { message: 'Internal Server Error' } });
+  const errorMessage = process.env.NODE_ENV === 'production'
+    ? 'Internal Server Error'
+    : err.message || 'Internal Server Error';
+  res.status(500).json({ error: { message: errorMessage, stack: process.env.NODE_ENV === 'production' ? undefined : err.stack } });
 });
 
 export default app;
