@@ -12,7 +12,7 @@ interface EditItemPageProps {}
 const EditItemPage: React.FC<EditItemPageProps> = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const queryClient = useQueryClient();
 
   // Fetch the specific item's data
@@ -70,7 +70,7 @@ const EditItemPage: React.FC<EditItemPageProps> = () => {
   if (!item) return <div className="text-center text-gray-500 mt-8">商品が見つかりません。</div>;
 
   // Ensure the logged-in user is the owner of the item
-  if (user?.id !== item.userId) {
+  if (currentUser?.id !== item.userId) {
     return <div className="text-center text-red-500 mt-8">この商品を編集する権限がありません。</div>;
   }
 

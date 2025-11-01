@@ -16,12 +16,12 @@ interface CreateItemPayload {
 
 const PostItemPage: React.FC<PostItemPageProps> = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const queryClient = useQueryClient();
 
   const { mutate: createItem, isPending } = useMutation<Item, Error, CreateItemPayload>({
     mutationFn: ({ formData, imageFile }) => {
-      if (!user) {
+      if (!currentUser) {
         throw new Error('User not authenticated');
       }
       // The exhibitorName is now part of the formData
