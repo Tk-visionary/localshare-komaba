@@ -5,8 +5,9 @@ const SECONDS_IN_DAY = SECONDS_IN_HOUR * 24;
 const SECONDS_IN_MONTH = SECONDS_IN_DAY * 30; // Approximation
 const SECONDS_IN_YEAR = SECONDS_IN_DAY * 365; // Approximation
 
-export const timeSince = (date: Date): string => {
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+export const timeSince = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const seconds = Math.floor((new Date().getTime() - dateObj.getTime()) / 1000);
 
   let interval = seconds / SECONDS_IN_YEAR;
   if (interval > 1) return Math.floor(interval) + "年前";
