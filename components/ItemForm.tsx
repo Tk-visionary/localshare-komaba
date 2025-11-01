@@ -120,7 +120,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
       </div>
 
       <button ref={buttonRef} type="submit" disabled={isSubmitting} className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-komaba-orange hover:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ut-blue disabled:bg-komaba-orange/50 disabled:cursor-not-allowed" style={{ minHeight: '48px' }}>
-        {/* Text is now managed by useEffect */}
+        {isSubmitting ? '処理中...' : existingItem ? '更新する' : '出品する'}
       </button>
     </form>
   );
