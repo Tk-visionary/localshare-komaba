@@ -47,9 +47,14 @@ router.get('/', async (req: Request, res: Response<Item[] | { error: string }>, 
     const { userId } = req.query;
     let query: admin.firestore.Query = db().collection('items');
     if (userId && typeof userId === 'string') {
+      console.log(`[Items API] Fetching items for userId: ${userId}`);
       query = query.where('userId', '==', userId);
+    } else {
+      console.log('[Items API] Fetching all items');
     }
     const itemsSnapshot = await query.orderBy('postedAt', 'desc').get();
+    console.log(`[Items API] Found ${itemsSnapshot.docs.length} items`);
+
     const items: Item[] = itemsSnapshot.docs.map(doc => {
       try {
         const data = convertTimestamps(doc.data());
@@ -62,7 +67,7 @@ router.get('/', async (req: Request, res: Response<Item[] | { error: string }>, 
     });
     res.json(items);
   } catch (error) {
-    console.error('Error fetching items:', error);
+    console.error('[Items API] Error fetching items:', error);
     next(error);
   }
 });
