@@ -6,6 +6,16 @@ import { Item } from '../types.js';
 const router = express.Router();
 const db = () => admin.firestore();
 
+// Helper function to convert Firestore Timestamp to ISO string
+const convertTimestamps = (data: any): any => {
+  if (!data) return data;
+  const converted = { ...data };
+  if (converted.postedAt && typeof converted.postedAt.toDate === 'function') {
+    converted.postedAt = converted.postedAt.toDate().toISOString();
+  }
+  return converted;
+};
+
 type CreateItemBody = Omit<Item, 'id' | 'postedAt' | 'isSoldOut' | 'user'>;
 
 const itemValidationRules = [
@@ -27,7 +37,10 @@ router.get('/', async (req: Request, res: Response<Item[] | { error: string }>, 
       query = query.where('userId', '==', userId);
     }
     const itemsSnapshot = await query.orderBy('postedAt', 'desc').get();
-    const items: Item[] = itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Item));
+    const items: Item[] = itemsSnapshot.docs.map(doc => {
+      const data = convertTimestamps(doc.data());
+      return { id: doc.id, ...data } as Item;
+    });
     res.json(items);
   } catch (error) {
     next(error);
@@ -44,7 +57,8 @@ router.get('/:id', async (req: Request, res: Response<Item | { error: string }>,
       return res.status(404).json({ error: 'Item not found' });
     }
 
-    res.json({ id: doc.id, ...doc.data() } as Item);
+    const data = convertTimestamps(doc.data());
+    res.json({ id: doc.id, ...data } as Item);
   } catch (error) {
     next(error);
   }
@@ -56,13 +70,10 @@ router.post('/', itemValidationRules, async (req: Request<{}, {}, CreateItemBody
     return res.status(400).json({ error: { message: 'Validation failed', details: errors.array() } });
   }
   try {
-    const { exhibitorName, ...itemData } = req.body;
+    const itemData = req.body;
     const userId = req.user!.uid; // Get user ID from authenticated session
 
     const userRef = db().collection('users').doc(userId);
-    // Update the user's name based on the exhibitor name they provided
-    await userRef.set({ name: exhibitorName }, { merge: true });
-
     const userDoc = await userRef.get();
     const userData = userDoc.exists ? userDoc.data() : null;
 
@@ -70,7 +81,7 @@ router.post('/', itemValidationRules, async (req: Request<{}, {}, CreateItemBody
         ...itemData,
         userId,
         user: {
-          name: exhibitorName,
+          name: userData?.name || 'Unknown User',
           picture: userData?.picture || null,
         },
         postedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -78,7 +89,12 @@ router.post('/', itemValidationRules, async (req: Request<{}, {}, CreateItemBody
     };
 
     const docRef = await db().collection('items').add(newItem);
-    res.status(201).json({ id: docRef.id, ...newItem });
+
+    // Fetch the newly created document to get the resolved timestamp
+    const createdDoc = await docRef.get();
+    const createdData = convertTimestamps(createdDoc.data());
+
+    res.status(201).json({ id: docRef.id, ...createdData });
   } catch (error) {
     next(error);
   }
@@ -131,7 +147,8 @@ router.put('/:id', updateItemValidationRules, async (req: Request<{ id: string }
         await itemRef.update(cleanedData);
 
         const updatedDoc = await itemRef.get();
-        res.json({ id: updatedDoc.id, ...updatedDoc.data() } as Item);
+        const updatedData = convertTimestamps(updatedDoc.data());
+        res.json({ id: updatedDoc.id, ...updatedData } as Item);
     } catch (error) {
         next(error);
     }
