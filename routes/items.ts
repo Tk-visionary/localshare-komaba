@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import admin from 'firebase-admin';
 import { body, validationResult } from 'express-validator';
 import { Item } from '../types.js';
+import { firebaseAuthMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 const db = () => admin.firestore();
@@ -83,7 +84,7 @@ router.get('/:id', async (req: Request, res: Response<Item | { error: string }>,
   }
 });
 
-router.post('/', itemValidationRules, async (req: Request<{}, {}, CreateItemBody>, res: Response, next: NextFunction) => {
+router.post('/', firebaseAuthMiddleware, itemValidationRules, async (req: Request<{}, {}, CreateItemBody>, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ error: { message: 'Validation failed', details: errors.array() } });
@@ -131,7 +132,7 @@ const updateItemValidationRules = [
   body('isSoldOut').optional().isBoolean(),
 ];
 
-router.put('/:id', updateItemValidationRules, async (req: Request<{ id: string }, {}, Partial<Item>>, res: Response, next: NextFunction) => {
+router.put('/:id', firebaseAuthMiddleware, updateItemValidationRules, async (req: Request<{ id: string }, {}, Partial<Item>>, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ error: { message: 'Validation failed', details: errors.array() } });
@@ -173,7 +174,7 @@ router.put('/:id', updateItemValidationRules, async (req: Request<{ id: string }
     }
 });
 
-router.delete('/:id', async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+router.delete('/:id', firebaseAuthMiddleware, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
         const itemRef = db().collection('items').doc(id);
