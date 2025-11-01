@@ -12,11 +12,20 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded.' });
     }
-    const blob = bucket().file(`uploads/${uuidv4()}-${req.file.originalname}`);
+
+    const fileName = `uploads/${uuidv4()}-${req.file.originalname}`;
+    const blob = bucket().file(fileName);
+
+    // Generate a download token for public access
+    const downloadToken = uuidv4();
+
     const blobStream = blob.createWriteStream({
       metadata: {
         contentType: req.file.mimetype,
-        cacheControl: 'public, max-age=31536000'
+        cacheControl: 'public, max-age=31536000',
+        metadata: {
+          firebaseStorageDownloadTokens: downloadToken
+        }
       }
     });
 
@@ -27,13 +36,15 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
 
     blobStream.on('finish', async () => {
       try {
-        // Make the file public
-        await blob.makePublic();
-        const publicUrl = `https://storage.googleapis.com/${bucket().name}/${blob.name}`;
+        // Generate public URL with download token
+        const bucketName = bucket().name;
+        const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
+
+        console.log(`File uploaded successfully: ${publicUrl}`);
         res.status(200).json({ url: publicUrl });
       } catch (err) {
-        console.error('Error making file public:', err);
-        res.status(500).json({ error: 'Failed to set file permissions' });
+        console.error('Error generating download URL:', err);
+        res.status(500).json({ error: 'Failed to generate download URL' });
       }
     });
 
