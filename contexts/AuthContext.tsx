@@ -51,7 +51,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoadingGoogleSignIn(true);
     setError(null);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const firebaseUser = result.user;
+
+      // Immediately map and set the user to close popup quickly
+      const newUser = mapFirebaseUserToAppUser(firebaseUser);
+      setCurrentUser(newUser);
+
+      // Save to Firestore in the background (don't block)
+      const userRef = doc(db, 'users', firebaseUser.uid);
+      getDoc(userRef).then(userSnap => {
+        if (!userSnap.exists()) {
+          setDoc(userRef, newUser).catch(err => {
+            console.error('Failed to save user to Firestore:', err);
+          });
+        }
+      }).catch(err => {
+        console.error('Failed to check user in Firestore:', err);
+      });
+
     } catch (error: any) {
       setError(error.message);
       throw error;
