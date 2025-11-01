@@ -8,6 +8,7 @@ const HomePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [priceFilter, setPriceFilter] = useState<string>('all');
+  const [availabilityFilter, setAvailabilityFilter] = useState<string>('all');
 
   const { data: items = [], isLoading, isError, error } = useQuery<Item[], Error>({
     queryKey: ['items'],
@@ -21,9 +22,12 @@ const HomePage: React.FC = () => {
                             (item.user && item.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
       const matchesPrice = priceFilter === 'all' || (priceFilter === 'free' && item.price === 0);
-      return matchesSearch && matchesCategory && matchesPrice;
+      const matchesAvailability = availabilityFilter === 'all' ||
+                                   (availabilityFilter === 'available' && !item.isSoldOut) ||
+                                   (availabilityFilter === 'soldOut' && item.isSoldOut);
+      return matchesSearch && matchesCategory && matchesPrice && matchesAvailability;
     });
-  }, [items, searchTerm, categoryFilter, priceFilter]);
+  }, [items, searchTerm, categoryFilter, priceFilter, availabilityFilter]);
 
   const categoryOptions = [
     { value: 'all', label: 'すべて' },
@@ -35,6 +39,12 @@ const HomePage: React.FC = () => {
   const priceOptions = [
     { value: 'all', label: 'すべて' },
     { value: 'free', label: '無料のみ' },
+  ];
+
+  const availabilityOptions = [
+    { value: 'all', label: 'すべて' },
+    { value: 'available', label: '在庫あり' },
+    { value: 'soldOut', label: '売り切れ' },
   ];
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-komaba-orange"></div></div>;
@@ -84,8 +94,27 @@ const HomePage: React.FC = () => {
                   key={value}
                   onClick={() => setPriceFilter(value)}
                   className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${
-                    priceFilter === value 
-                      ? 'bg-komaba-orange text-white shadow-md' 
+                    priceFilter === value
+                      ? 'bg-komaba-orange text-white shadow-md'
+                      : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+             <h3 className="text-sm font-medium text-gray-700">在庫状況</h3>
+            <div className="flex flex-wrap gap-2">
+              {availabilityOptions.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setAvailabilityFilter(value)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${
+                    availabilityFilter === value
+                      ? 'bg-komaba-orange text-white shadow-md'
                       : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
                   }`}
                 >
