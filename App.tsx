@@ -33,7 +33,7 @@ function App() {
               </Routes>
             </main>
             <footer className="bg-komaba-header text-white text-center p-4 mt-8">
-              <p>&copy; 2024 LocalShare Project. All rights reserved.</p>
+              <p>&copy; 2025 LocalShare Project. All rights reserved.</p>
             </footer>
           </div>
         </HashRouter>
