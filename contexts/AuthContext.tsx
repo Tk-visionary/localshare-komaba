@@ -51,10 +51,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoadingGoogleSignIn(true);
     setError(null);
     try {
+      console.log('Initiating Google sign-in with redirect...');
+      console.log('Auth domain:', auth.config.authDomain);
       // Use redirect for all devices (more reliable, especially on mobile)
       await signInWithRedirect(auth, googleProvider);
       // Note: After redirect, the page will reload and useEffect will handle the result
     } catch (error: any) {
+      console.error('Error initiating sign-in:', error);
       setError(error.message);
       setLoadingGoogleSignIn(false);
       throw error;
@@ -70,8 +73,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Handle redirect result (for mobile login)
     const handleRedirectResult = async () => {
       try {
+        console.log('Checking for redirect result...');
         const result = await getRedirectResult(auth);
+        console.log('Redirect result:', result);
+
         if (result?.user) {
+          console.log('User logged in via redirect:', result.user.email);
           const firebaseUser = result.user;
           const newUser = mapFirebaseUserToAppUser(firebaseUser);
           setCurrentUser(newUser);
@@ -80,8 +87,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const userRef = doc(db, 'users', firebaseUser.uid);
           const userSnap = await getDoc(userRef);
           if (!userSnap.exists()) {
+            console.log('Creating new user in Firestore');
             await setDoc(userRef, newUser);
+          } else {
+            console.log('User already exists in Firestore');
           }
+        } else {
+          console.log('No redirect result found');
         }
       } catch (error: any) {
         console.error('Error handling redirect result:', error);
