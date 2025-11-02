@@ -95,7 +95,18 @@ app.use(cors({
 }));
 
 // --- 静的ファイル配信 ---
-app.use(express.static(path.join(__dirname, "client")));
+// Serve static files with cache control
+app.use(express.static(path.join(__dirname, "client"), {
+  maxAge: '1y', // Cache assets for 1 year (they have hash in filename)
+  setHeaders: (res, filepath) => {
+    // Don't cache index.html
+    if (filepath.endsWith('index.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 // --- ルーティング ---
 // Upload always requires authentication
@@ -107,7 +118,12 @@ app.use('/api/items', itemRoutes);
 // Only serve index.html for non-file requests (excludes .js, .css, .svg, etc.)
 app.get(/^\/(?!.*\.).*$/, (req, res) => {
   res.sendFile(path.join(__dirname, 'client', 'index.html'), {
-    headers: { 'Content-Type': 'text/html' },
+    headers: {
+      'Content-Type': 'text/html',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    },
   });
 });
 
