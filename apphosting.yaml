@@ -7,6 +7,7 @@ runConfig:
   environmentVariables:
     NODE_ENV: production
     CUSTOM_AUTH_DOMAIN: komabasai.local-share.net
+    ALLOWED_ORIGINS: https://komabasai.local-share.net,https://localshare-komaba--localshare-komaba-54c0d.asia-east1.hosted.app
   # Defines the secrets that are available to your app.
   secrets:
     - secret: FIREBASE_SERVICE_ACCOUNT
