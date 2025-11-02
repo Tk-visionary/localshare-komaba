@@ -104,7 +104,8 @@ app.use('/upload', firebaseAuthMiddleware, uploadRoutes);
 app.use('/api/items', itemRoutes);
 
 // --- SPA fallback ---
-app.get(/.*/, (req, res) => {
+// Only serve index.html for non-file requests (excludes .js, .css, .svg, etc.)
+app.get(/^\/(?!.*\.).*$/, (req, res) => {
   res.sendFile(path.join(__dirname, 'client', 'index.html'), {
     headers: { 'Content-Type': 'text/html' },
   });
