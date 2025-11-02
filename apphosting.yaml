@@ -6,6 +6,7 @@ runConfig:
   # Defines the environment variables that are available to your app.
   environmentVariables:
     NODE_ENV: production
+    CUSTOM_AUTH_DOMAIN: komabasai.local-share.net
   # Defines the secrets that are available to your app.
   secrets:
     - secret: FIREBASE_SERVICE_ACCOUNT
@@ -17,3 +18,4 @@ buildConfig:
   buildCommand: npm run build
   environmentVariables:
     GOOGLE_NODE_RUN_SCRIPTS: ""
+    CUSTOM_AUTH_DOMAIN: komabasai.local-share.net
