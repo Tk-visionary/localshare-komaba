@@ -5,6 +5,10 @@ const firebaseWebAppConfig = process.env.FIREBASE_WEBAPP_CONFIG ? JSON.parse(pro
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+
+  // Use custom auth domain if provided, otherwise use default from config
+  const authDomain = process.env.CUSTOM_AUTH_DOMAIN || firebaseWebAppConfig.authDomain || '';
+
   // Only expose VITE_ prefixed variables to the client
   return {
     build: {
@@ -27,7 +31,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(firebaseWebAppConfig.apiKey || ''),
-      'import.meta.env.VITE_FIREBASE_AUTH_DOMAIN': JSON.stringify(firebaseWebAppConfig.authDomain || ''),
+      'import.meta.env.VITE_FIREBASE_AUTH_DOMAIN': JSON.stringify(authDomain),
       'import.meta.env.VITE_FIREBASE_PROJECT_ID': JSON.stringify(firebaseWebAppConfig.projectId || ''),
       'import.meta.env.VITE_FIREBASE_STORAGE_BUCKET': JSON.stringify(firebaseWebAppConfig.storageBucket || ''),
       'import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID': JSON.stringify(firebaseWebAppConfig.messagingSenderId || ''),
