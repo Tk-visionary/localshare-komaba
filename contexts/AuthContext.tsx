@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { User } from '../types';
@@ -29,6 +29,11 @@ const mapFirebaseUserToAppUser = (firebaseUser: FirebaseUser): User => {
     };
 };
 
+// Detect if user is on mobile device
+const isMobileDevice = (): boolean => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,25 +56,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoadingGoogleSignIn(true);
     setError(null);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const firebaseUser = result.user;
+      // Use redirect on mobile devices, popup on desktop
+      if (isMobileDevice()) {
+        await signInWithRedirect(auth, googleProvider);
+        // Note: After redirect, the page will reload and useEffect will handle the result
+      } else {
+        const result = await signInWithPopup(auth, googleProvider);
+        const firebaseUser = result.user;
 
-      // Immediately map and set the user to close popup quickly
-      const newUser = mapFirebaseUserToAppUser(firebaseUser);
-      setCurrentUser(newUser);
+        // Immediately map and set the user to close popup quickly
+        const newUser = mapFirebaseUserToAppUser(firebaseUser);
+        setCurrentUser(newUser);
 
-      // Save to Firestore in the background (don't block)
-      const userRef = doc(db, 'users', firebaseUser.uid);
-      getDoc(userRef).then(userSnap => {
-        if (!userSnap.exists()) {
-          setDoc(userRef, newUser).catch(err => {
-            console.error('Failed to save user to Firestore:', err);
-          });
-        }
-      }).catch(err => {
-        console.error('Failed to check user in Firestore:', err);
-      });
-
+        // Save to Firestore in the background (don't block)
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        getDoc(userRef).then(userSnap => {
+          if (!userSnap.exists()) {
+            setDoc(userRef, newUser).catch(err => {
+              console.error('Failed to save user to Firestore:', err);
+            });
+          }
+        }).catch(err => {
+          console.error('Failed to check user in Firestore:', err);
+        });
+      }
     } catch (error: any) {
       setError(error.message);
       throw error;
@@ -83,6 +93,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
+    // Handle redirect result (for mobile login)
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          const firebaseUser = result.user;
+          const newUser = mapFirebaseUserToAppUser(firebaseUser);
+          setCurrentUser(newUser);
+
+          // Save to Firestore
+          const userRef = doc(db, 'users', firebaseUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            await setDoc(userRef, newUser);
+          }
+        }
+      } catch (error: any) {
+        console.error('Error handling redirect result:', error);
+        setError(error.message);
+      }
+    };
+
+    handleRedirectResult();
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const userRef = doc(db, 'users', firebaseUser.uid);
