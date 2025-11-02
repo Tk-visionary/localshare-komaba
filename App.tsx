@@ -18,10 +18,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <HashRouter>
-          <div className="min-h-screen bg-komaba-background font-sans">
+          <div className="min-h-screen bg-komaba-background font-sans flex flex-col">
             <Toaster position="top-center" reverseOrder={false} />
             <Header />
-            <main>
+            <main className="flex-grow">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
