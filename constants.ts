@@ -1,5 +1,5 @@
 
-export const APP_NAME = 'LocalShare (駒場祭ver)';
+export const APP_NAME = 'LocalShare';
 
 // Your web app's Firebase configuration
 export const firebaseConfig = {
@@ -11,7 +11,7 @@ export const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
-export const APP_SUBTITLE = "駒場祭 特化版";
+export const APP_SUBTITLE = "駒場祭ver";
 
 export const ITEM_STATUS = {
   SOLD_OUT: '売り切れ',
