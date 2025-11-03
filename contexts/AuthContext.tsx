@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { User } from '../types';
@@ -17,6 +17,11 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Function to detect if user is on a mobile device
+const isMobileDevice = (): boolean => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
 
 // Function to map Firebase User to our app's User type
 const mapFirebaseUserToAppUser = (firebaseUser: FirebaseUser): User => {
@@ -51,36 +56,75 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoadingGoogleSignIn(true);
     setError(null);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const firebaseUser = result.user;
+      // Use redirect for mobile devices, popup for desktop
+      if (isMobileDevice()) {
+        await signInWithRedirect(auth, googleProvider);
+        // Redirect will happen, so we don't need to do anything else here
+        // The result will be handled by getRedirectResult in useEffect
+      } else {
+        const result = await signInWithPopup(auth, googleProvider);
+        const firebaseUser = result.user;
 
-      // Immediately map and set the user to close popup quickly
-      const newUser = mapFirebaseUserToAppUser(firebaseUser);
-      setCurrentUser(newUser);
+        // Immediately map and set the user to close popup quickly
+        const newUser = mapFirebaseUserToAppUser(firebaseUser);
+        setCurrentUser(newUser);
 
-      // Save to Firestore in the background (don't block)
-      const userRef = doc(db, 'users', firebaseUser.uid);
-      getDoc(userRef).then(userSnap => {
-        if (!userSnap.exists()) {
-          setDoc(userRef, newUser).catch(err => {
-            console.error('Failed to save user to Firestore:', err);
-          });
-        }
-      }).catch(err => {
-        console.error('Failed to check user in Firestore:', err);
-      });
-
+        // Save to Firestore in the background (don't block)
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        getDoc(userRef).then(userSnap => {
+          if (!userSnap.exists()) {
+            setDoc(userRef, newUser).catch(err => {
+              console.error('Failed to save user to Firestore:', err);
+            });
+          }
+        }).catch(err => {
+          console.error('Failed to check user in Firestore:', err);
+        });
+        setLoadingGoogleSignIn(false);
+      }
     } catch (error: any) {
       setError(error.message);
-      throw error;
-    } finally {
       setLoadingGoogleSignIn(false);
+      throw error;
     }
   };
 
   const resetPassword = (email: string) => {
     return sendPasswordResetEmail(auth, email);
   };
+
+  // Handle redirect result for mobile devices
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setLoadingGoogleSignIn(true);
+          const firebaseUser = result.user;
+
+          // Map and set the user
+          const newUser = mapFirebaseUserToAppUser(firebaseUser);
+          setCurrentUser(newUser);
+
+          // Save to Firestore in the background
+          const userRef = doc(db, 'users', firebaseUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            await setDoc(userRef, newUser).catch(err => {
+              console.error('Failed to save user to Firestore:', err);
+            });
+          }
+          setLoadingGoogleSignIn(false);
+        }
+      } catch (error: any) {
+        console.error('Redirect result error:', error);
+        setError(error.message);
+        setLoadingGoogleSignIn(false);
+      }
+    };
+
+    handleRedirectResult();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
