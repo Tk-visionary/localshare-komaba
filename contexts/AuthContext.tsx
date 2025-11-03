@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { User } from '../types';
@@ -51,49 +51,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoadingGoogleSignIn(true);
     setError(null);
     try {
-      // Set persistence FIRST before any auth operation
-      console.log('[AuthContext] Setting auth persistence to LOCAL...');
-      await setPersistence(auth, browserLocalPersistence);
-      console.log('[AuthContext] Auth persistence set to LOCAL');
+      // Open popup immediately on user action to avoid being blocked
+      // Persistence is already set during app initialization
+      console.log('[AuthContext] Opening popup for authentication...');
+      const result = await signInWithPopup(auth, googleProvider);
+      const firebaseUser = result.user;
 
-      // Try popup first, fallback to redirect if popup is blocked
-      console.log('[AuthContext] Attempting popup authentication...');
-      try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const firebaseUser = result.user;
+      // Immediately map and set the user
+      const newUser = mapFirebaseUserToAppUser(firebaseUser);
+      setCurrentUser(newUser);
+      console.log('[AuthContext] User authenticated:', newUser.email);
 
-        // Immediately map and set the user
-        const newUser = mapFirebaseUserToAppUser(firebaseUser);
-        setCurrentUser(newUser);
-        console.log('[AuthContext] User authenticated via popup:', newUser.email);
-
-        // Save to Firestore in the background (don't block)
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        getDoc(userRef).then(userSnap => {
-          if (!userSnap.exists()) {
-            setDoc(userRef, newUser).then(() => {
-              console.log('[AuthContext] User saved to Firestore');
-            }).catch(err => {
-              console.error('[AuthContext] Failed to save user to Firestore:', err);
-            });
-          } else {
-            console.log('[AuthContext] User already exists in Firestore');
-          }
-        }).catch(err => {
-          console.error('[AuthContext] Failed to check user in Firestore:', err);
-        });
-
-        setLoadingGoogleSignIn(false);
-      } catch (popupError: any) {
-        // If popup fails, try redirect as fallback
-        if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/popup-closed-by-user') {
-          console.log('[AuthContext] Popup blocked or closed, falling back to redirect...');
-          await signInWithRedirect(auth, googleProvider);
-          // Redirect will happen, loading state will be handled by redirect result processing
+      // Save to Firestore in the background (don't block)
+      const userRef = doc(db, 'users', firebaseUser.uid);
+      getDoc(userRef).then(userSnap => {
+        if (!userSnap.exists()) {
+          setDoc(userRef, newUser).then(() => {
+            console.log('[AuthContext] User saved to Firestore');
+          }).catch(err => {
+            console.error('[AuthContext] Failed to save user to Firestore:', err);
+          });
         } else {
-          throw popupError;
+          console.log('[AuthContext] User already exists in Firestore');
         }
-      }
+      }).catch(err => {
+        console.error('[AuthContext] Failed to check user in Firestore:', err);
+      });
+
+      setLoadingGoogleSignIn(false);
     } catch (error: any) {
       console.error('[AuthContext] signInWithGoogle error:', error);
       console.error('[AuthContext] Error code:', error.code);
@@ -113,44 +98,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initializeAuth = async () => {
       console.log('[AuthContext] Initializing auth...');
 
-      // Set persistence FIRST
+      // Set persistence FIRST - this ensures auth state survives page reloads
       try {
         console.log('[AuthContext] Setting auth persistence to LOCAL...');
         await setPersistence(auth, browserLocalPersistence);
         console.log('[AuthContext] Auth persistence set to LOCAL');
       } catch (error: any) {
         console.error('[AuthContext] Failed to set persistence:', error);
-      }
-
-      // Check for redirect result
-      try {
-        console.log('[AuthContext] Checking for redirect result...');
-        const result = await getRedirectResult(auth);
-        if (result) {
-          console.log('[AuthContext] Processing redirect result for:', result.user.email);
-          const firebaseUser = result.user;
-
-          // Map and set the user
-          const newUser = mapFirebaseUserToAppUser(firebaseUser);
-          setCurrentUser(newUser);
-
-          // Save to Firestore
-          const userRef = doc(db, 'users', firebaseUser.uid);
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) {
-            await setDoc(userRef, newUser);
-            console.log('[AuthContext] User saved to Firestore');
-          }
-
-          setLoadingGoogleSignIn(false);
-          console.log('[AuthContext] Redirect authentication successful');
-        } else {
-          console.log('[AuthContext] No redirect result found');
-        }
-      } catch (error: any) {
-        console.error('[AuthContext] Redirect result error:', error);
-        setError(error.message);
-        setLoadingGoogleSignIn(false);
       }
 
       // Set up the auth state listener
