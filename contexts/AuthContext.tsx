@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Provide user-friendly error messages
       if (error.code === 'auth/popup-closed-by-user') {
-        setError('ログインがキャンセルされました。ポップアップでアカウントを選択してください。');
+        setError('⚠️ 認証タブを最後まで開いたままにしてください。「許可」をクリックした後、自動で元のページに戻ります。手動でタブを切り替えないでください。');
       } else if (error.code === 'auth/popup-blocked') {
         setError('ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。');
       } else if (error.code === 'auth/cancelled-popup-request') {
