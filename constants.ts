@@ -1,20 +1,10 @@
 
 export const APP_NAME = 'LocalShare';
 
-// Determine authDomain based on current location
-const getAuthDomain = (): string => {
-  // If running on custom domain, use it
-  if (typeof window !== 'undefined' && window.location.hostname === 'komabasai.local-share.net') {
-    return 'komabasai.local-share.net';
-  }
-  // Otherwise, use environment variable or default
-  return import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '';
-};
-
 // Your web app's Firebase configuration
 export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: getAuthDomain(),
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,

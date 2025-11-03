@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
@@ -17,7 +17,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
+        <HashRouter>
           <div className="min-h-screen bg-komaba-background font-sans flex flex-col">
             <Toaster position="top-center" reverseOrder={false} />
             <Header />
@@ -30,15 +30,13 @@ function App() {
                     <Route path="/my-items" element={<MyItemsPage />} />
                     <Route path="/edit-item/:itemId" element={<EditItemPage />} />
                 </Route>
-                {/* Catch-all route for Firebase Auth handler and other unknown paths */}
-                <Route path="*" element={<HomePage />} />
               </Routes>
             </main>
             <footer className="bg-komaba-header text-white text-center p-4 mt-8">
               <p>&copy; 2025 LocalShare Project. All rights reserved.</p>
             </footer>
           </div>
-        </BrowserRouter>
+        </HashRouter>
       </AuthProvider>
     </QueryClientProvider>
   );
