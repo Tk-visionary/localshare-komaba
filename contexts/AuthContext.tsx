@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { User } from '../types';
@@ -56,6 +56,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoadingGoogleSignIn(true);
     setError(null);
     try {
+      // Set persistence FIRST before any auth operation
+      console.log('[AuthContext] Setting auth persistence to LOCAL...');
+      await setPersistence(auth, browserLocalPersistence);
+      console.log('[AuthContext] Auth persistence set to LOCAL');
+
       // Use redirect for mobile devices, popup for desktop
       if (isMobileDevice()) {
         console.log('[AuthContext] Mobile device detected, using redirect...');
@@ -108,6 +113,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initializeAuth = async () => {
       console.log('[AuthContext] Initializing auth...');
 
+      // Set persistence FIRST before checking redirect result
+      try {
+        console.log('[AuthContext] Setting auth persistence to LOCAL...');
+        await setPersistence(auth, browserLocalPersistence);
+        console.log('[AuthContext] Auth persistence set to LOCAL');
+      } catch (error: any) {
+        console.error('[AuthContext] Failed to set persistence:', error);
+      }
+
       // Check if we're expecting a redirect result
       const pendingRedirect = localStorage.getItem('pendingGoogleRedirect');
       const redirectTimestamp = localStorage.getItem('redirectTimestamp');
@@ -118,7 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('[AuthContext] Time elapsed since redirect:', timeElapsed, 'ms');
       }
 
-      // First, handle any pending redirect result for mobile devices
+      // Now handle any pending redirect result for mobile devices
       try {
         console.log('[AuthContext] Checking for redirect result...');
         const result = await getRedirectResult(auth);
