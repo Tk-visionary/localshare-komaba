@@ -37,7 +37,16 @@ const LoginPage: React.FC = () => {
 
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
+            <p className="font-semibold mb-1">{error}</p>
+            {error.includes('ポップアップ') && (
+              <div className="text-xs mt-2 text-red-600">
+                <p>【ポップアップを許可する方法】</p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Chrome: アドレスバーの🚫アイコンをタップ</li>
+                  <li>Safari: 設定 → Safari → ポップアップブロックをオフ</li>
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
