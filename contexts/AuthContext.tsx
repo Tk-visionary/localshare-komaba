@@ -51,14 +51,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoadingGoogleSignIn(true);
     setError(null);
     try {
-      // Set persistence FIRST before any auth operation
-      console.log('[AuthContext] Setting auth persistence to LOCAL...');
-      await setPersistence(auth, browserLocalPersistence);
-      console.log('[AuthContext] Auth persistence set to LOCAL');
-
-      // Use popup for all devices - modern mobile browsers support popups
-      // Redirect method has issues with custom domains and /__/auth/handler
-      console.log('[AuthContext] Using popup for authentication...');
+      // Open popup immediately on user action to avoid being blocked
+      // Persistence is already set during app initialization
+      console.log('[AuthContext] Opening popup for authentication...');
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
 
@@ -103,7 +98,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initializeAuth = async () => {
       console.log('[AuthContext] Initializing auth...');
 
-      // Set persistence FIRST
+      // Set persistence FIRST - this ensures auth state survives page reloads
       try {
         console.log('[AuthContext] Setting auth persistence to LOCAL...');
         await setPersistence(auth, browserLocalPersistence);
