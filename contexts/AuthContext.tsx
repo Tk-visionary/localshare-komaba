@@ -97,11 +97,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     let unsubscribe: (() => void) | null = null;
 
     const initializeAuth = async () => {
+      console.log('[AuthContext] Initializing auth...');
+
       // First, handle any pending redirect result for mobile devices
       try {
+        console.log('[AuthContext] Checking for redirect result...');
         const result = await getRedirectResult(auth);
+        console.log('[AuthContext] Redirect result:', result ? `User: ${result.user.email}` : 'null');
+
         if (result) {
-          console.log('Processing redirect result:', result.user.email);
+          console.log('[AuthContext] Processing redirect result for:', result.user.email);
           const firebaseUser = result.user;
 
           // Map and set the user
@@ -112,36 +117,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const userSnap = await getDoc(userRef);
           if (!userSnap.exists()) {
             await setDoc(userRef, newUser);
-            console.log('User saved to Firestore:', newUser.email);
+            console.log('[AuthContext] User saved to Firestore:', newUser.email);
+          } else {
+            console.log('[AuthContext] User already exists in Firestore');
           }
 
           setCurrentUser(newUser);
           setLoadingGoogleSignIn(false);
+          console.log('[AuthContext] Current user set from redirect result');
+        } else {
+          console.log('[AuthContext] No redirect result found');
         }
       } catch (error: any) {
-        console.error('Redirect result error:', error);
+        console.error('[AuthContext] Redirect result error:', error);
         setError(error.message);
         setLoadingGoogleSignIn(false);
       }
 
       // Now set up the auth state listener
+      console.log('[AuthContext] Setting up auth state listener...');
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        console.log('Auth state changed:', firebaseUser?.email || 'null');
+        console.log('[AuthContext] Auth state changed:', firebaseUser?.email || 'null');
         if (firebaseUser) {
+          console.log('[AuthContext] User is logged in:', firebaseUser.email);
           const userRef = doc(db, 'users', firebaseUser.uid);
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
             setCurrentUser(userSnap.data() as User);
+            console.log('[AuthContext] User data loaded from Firestore');
           } else {
             // Create a new user document in Firestore if it doesn't exist
             const newUser = mapFirebaseUserToAppUser(firebaseUser);
             await setDoc(userRef, newUser);
             setCurrentUser(newUser);
+            console.log('[AuthContext] New user created in Firestore');
           }
         } else {
+          console.log('[AuthContext] User is logged out');
           setCurrentUser(null);
         }
         setLoading(false);
+        console.log('[AuthContext] Loading complete');
       });
     };
 
