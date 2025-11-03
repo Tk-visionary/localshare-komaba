@@ -38,10 +38,12 @@ console.log('[Firebase] Firebase services created');
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
 
+// Force consent screen to ensure authentication completes before redirect
+// This prevents popup from closing too quickly on mobile devices
 googleProvider.setCustomParameters({
-    prompt: 'select_account'
+    prompt: 'consent select_account'
 });
 
-console.log('[Firebase] Google provider configured');
+console.log('[Firebase] Google provider configured with consent prompt');
 
 export { app, auth, db, storage, googleProvider };
