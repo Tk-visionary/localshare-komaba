@@ -58,10 +58,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       // Use redirect for mobile devices, popup for desktop
       if (isMobileDevice()) {
+        console.log('[AuthContext] Mobile device detected, using redirect...');
+        // Store a flag to indicate we're expecting a redirect result
+        localStorage.setItem('pendingGoogleRedirect', 'true');
+        localStorage.setItem('redirectTimestamp', Date.now().toString());
+        console.log('[AuthContext] Stored redirect flag in localStorage');
+
         await signInWithRedirect(auth, googleProvider);
+        console.log('[AuthContext] signInWithRedirect called');
         // Redirect will happen, so we don't need to do anything else here
         // The result will be handled by getRedirectResult in useEffect
       } else {
+        console.log('[AuthContext] Desktop device detected, using popup...');
         const result = await signInWithPopup(auth, googleProvider);
         const firebaseUser = result.user;
 
@@ -83,6 +91,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoadingGoogleSignIn(false);
       }
     } catch (error: any) {
+      console.error('[AuthContext] signInWithGoogle error:', error);
       setError(error.message);
       setLoadingGoogleSignIn(false);
       throw error;
@@ -99,6 +108,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initializeAuth = async () => {
       console.log('[AuthContext] Initializing auth...');
 
+      // Check if we're expecting a redirect result
+      const pendingRedirect = localStorage.getItem('pendingGoogleRedirect');
+      const redirectTimestamp = localStorage.getItem('redirectTimestamp');
+
+      if (pendingRedirect) {
+        console.log('[AuthContext] Found pending redirect flag from:', redirectTimestamp);
+        const timeElapsed = Date.now() - parseInt(redirectTimestamp || '0', 10);
+        console.log('[AuthContext] Time elapsed since redirect:', timeElapsed, 'ms');
+      }
+
       // First, handle any pending redirect result for mobile devices
       try {
         console.log('[AuthContext] Checking for redirect result...');
@@ -107,6 +126,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (result) {
           console.log('[AuthContext] Processing redirect result for:', result.user.email);
+          // Clear the pending redirect flag
+          localStorage.removeItem('pendingGoogleRedirect');
+          localStorage.removeItem('redirectTimestamp');
+          console.log('[AuthContext] Cleared redirect flags');
+
           const firebaseUser = result.user;
 
           // Map and set the user
@@ -127,11 +151,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           console.log('[AuthContext] Current user set from redirect result');
         } else {
           console.log('[AuthContext] No redirect result found');
+          // If we were expecting a redirect but didn't get one, clean up the flags
+          if (pendingRedirect) {
+            console.warn('[AuthContext] Expected redirect result but got null - clearing flags');
+            localStorage.removeItem('pendingGoogleRedirect');
+            localStorage.removeItem('redirectTimestamp');
+          }
         }
       } catch (error: any) {
         console.error('[AuthContext] Redirect result error:', error);
         setError(error.message);
         setLoadingGoogleSignIn(false);
+        // Clear the pending redirect flag on error
+        localStorage.removeItem('pendingGoogleRedirect');
+        localStorage.removeItem('redirectTimestamp');
       }
 
       // Now set up the auth state listener
