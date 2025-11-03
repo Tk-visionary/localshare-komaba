@@ -93,27 +93,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return sendPasswordResetEmail(auth, email);
   };
 
-  // Handle redirect result for mobile devices
   useEffect(() => {
-    const handleRedirectResult = async () => {
+    let unsubscribe: (() => void) | null = null;
+
+    const initializeAuth = async () => {
+      // First, handle any pending redirect result for mobile devices
       try {
         const result = await getRedirectResult(auth);
         if (result) {
-          setLoadingGoogleSignIn(true);
+          console.log('Processing redirect result:', result.user.email);
           const firebaseUser = result.user;
 
           // Map and set the user
           const newUser = mapFirebaseUserToAppUser(firebaseUser);
-          setCurrentUser(newUser);
 
-          // Save to Firestore in the background
+          // Save to Firestore first
           const userRef = doc(db, 'users', firebaseUser.uid);
           const userSnap = await getDoc(userRef);
           if (!userSnap.exists()) {
-            await setDoc(userRef, newUser).catch(err => {
-              console.error('Failed to save user to Firestore:', err);
-            });
+            await setDoc(userRef, newUser);
+            console.log('User saved to Firestore:', newUser.email);
           }
+
+          setCurrentUser(newUser);
           setLoadingGoogleSignIn(false);
         }
       } catch (error: any) {
@@ -121,31 +123,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setError(error.message);
         setLoadingGoogleSignIn(false);
       }
-    };
 
-    handleRedirectResult();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
+      // Now set up the auth state listener
+      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        console.log('Auth state changed:', firebaseUser?.email || 'null');
+        if (firebaseUser) {
+          const userRef = doc(db, 'users', firebaseUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
             setCurrentUser(userSnap.data() as User);
-        } else {
+          } else {
             // Create a new user document in Firestore if it doesn't exist
             const newUser = mapFirebaseUserToAppUser(firebaseUser);
             await setDoc(userRef, newUser);
             setCurrentUser(newUser);
+          }
+        } else {
+          setCurrentUser(null);
         }
-      } else {
-        setCurrentUser(null);
-      }
-      setLoading(false);
-    });
+        setLoading(false);
+      });
+    };
 
-    return () => unsubscribe();
+    initializeAuth();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const value = {
