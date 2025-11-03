@@ -82,7 +82,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error: any) {
       console.error('[AuthContext] signInWithGoogle error:', error);
       console.error('[AuthContext] Error code:', error.code);
-      setError(error.message);
+
+      // Provide user-friendly error messages
+      if (error.code === 'auth/popup-closed-by-user') {
+        setError('ログインがキャンセルされました。ポップアップでアカウントを選択してください。');
+      } else if (error.code === 'auth/popup-blocked') {
+        setError('ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        setError('複数のポップアップが開かれました。もう一度お試しください。');
+      } else {
+        setError(`ログインエラー: ${error.message}`);
+      }
+
       setLoadingGoogleSignIn(false);
       throw error;
     }
