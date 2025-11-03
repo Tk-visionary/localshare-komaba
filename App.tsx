@@ -30,6 +30,8 @@ function App() {
                     <Route path="/my-items" element={<MyItemsPage />} />
                     <Route path="/edit-item/:itemId" element={<EditItemPage />} />
                 </Route>
+                {/* Catch-all route for Firebase Auth handler and other unknown paths */}
+                <Route path="*" element={<HomePage />} />
               </Routes>
             </main>
             <footer className="bg-komaba-header text-white text-center p-4 mt-8">
