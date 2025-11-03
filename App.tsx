@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
@@ -17,7 +17,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <HashRouter>
+        <BrowserRouter>
           <div className="min-h-screen bg-komaba-background font-sans flex flex-col">
             <Toaster position="top-center" reverseOrder={false} />
             <Header />
@@ -36,7 +36,7 @@ function App() {
               <p>&copy; 2025 LocalShare Project. All rights reserved.</p>
             </footer>
           </div>
-        </HashRouter>
+        </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
   );
