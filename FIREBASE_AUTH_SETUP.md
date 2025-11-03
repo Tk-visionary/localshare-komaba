@@ -1,67 +1,89 @@
-# Firebase認証でカスタムドメインを使用するための設定
+# Firebase認証の設定と動作
 
-## 問題
+## アプリの認証方式
 
-カスタムドメイン（`komabasai.local-share.net`）でGoogle認証のリダイレクトを使用すると、`/__/auth/handler`が正しく動作せず、認証が失敗します。
+このアプリは**Firebase App Hosting**を使用しています。App Hostingでは`/__/auth/handler`が提供されないため、**ポップアップ認証のみ**を使用します。
 
-## 解決方法
+## 認証フロー
 
-Firebase Consoleでカスタムドメインを「承認済みドメイン」に追加する必要があります。
+### ログインボタンをクリック
+1. ユーザーアクションから**即座に**ポップアップが開きます
+2. Googleアカウント選択画面が表示されます
+3. アカウントを選択するとポップアップが閉じます
+4. ログイン完了
 
-## 設定手順
+### 認証状態の永続化
 
-### 1. Firebase Consoleにアクセス
+- アプリ起動時に`setPersistence(browserLocalPersistence)`を実行
+- これにより、ページリロードやブラウザ再起動後もログイン状態が維持されます
+
+## ポップアップがブロックされる場合
+
+モバイルブラウザでポップアップがブロックされる場合：
+
+1. **ブラウザの設定を確認**
+   - サイトのポップアップを許可に設定してください
+   - Chrome (Android): 設定 > サイトの設定 > ポップアップとリダイレクト
+   - Safari (iOS): 設定 > Safari > ポップアップブロック
+
+2. **プライベートモード/シークレットモードを使用しない**
+   - これらのモードではポップアップがより厳しくブロックされます
+
+3. **別のブラウザを試す**
+   - Chrome、Safari、Firefoxなど、別のブラウザで試してください
+
+## Firebase Console設定
+
+### 承認済みドメイン
+
+カスタムドメインを使用する場合は、Firebase Consoleで承認済みドメインに追加してください：
 
 1. [Firebase Console](https://console.firebase.google.com/) を開く
 2. プロジェクト `localshare-komaba-54c0d` を選択
+3. Authentication > Settings > Authorized domains
+4. `komabasai.local-share.net` を追加
 
-### 2. 認証設定を開く
-
-1. 左側メニューから「Authentication」（認証）をクリック
-2. 上部タブから「Settings」（設定）をクリック
-3. 「Authorized domains」（承認済みドメイン）セクションまでスクロール
-
-### 3. カスタムドメインを追加
-
-1. 「Add domain」（ドメインを追加）ボタンをクリック
-2. カスタムドメインを入力：`komabasai.local-share.net`
-3. 「Add」（追加）ボタンをクリック
-
-### 4. 確認
-
-承認済みドメインリストに以下が含まれていることを確認：
-- `localhost`
-- `localshare-komaba-54c0d.firebaseapp.com`
-- `komabasai.local-share.net` ← 新しく追加
-
-## 設定後の動作
-
-この設定により：
-1. カスタムドメインで`/__/auth/handler`が正しく動作するようになります
-2. モバイルでポップアップがブロックされた場合、リダイレクト方式が自動的に使用されます
-3. リダイレクト後、正しくログイン状態が維持されます
-
-## 注意事項
-
-- ドメインの追加には管理者権限が必要です
-- 変更は即座に反映されます（再デプロイ不要）
-- 複数のカスタムドメインがある場合は、すべて追加してください
+**注意**: App Hostingではリダイレクト認証は使用できません。承認済みドメインの追加は、ポップアップ認証の正常動作に必要です。
 
 ## トラブルシューティング
 
-### ポップアップがブロックされる場合
+### `auth/popup-closed-by-user` エラー
 
-モバイルブラウザでポップアップがブロックされた場合、自動的にリダイレクト方式にフォールバックします。ログに以下が表示されます：
+**原因**: ポップアップがブラウザによってブロックされています
 
+**解決策**:
+1. サイトのポップアップを許可
+2. HTTPSを使用（ローカル開発では`localhost`を使用）
+3. ユーザーアクションから直接認証を開始（ボタンクリック等）
+
+### ログイン状態が維持されない
+
+**原因**: `setPersistence`が失敗している可能性があります
+
+**解決策**:
+1. ブラウザのコンソールでエラーを確認
+2. ローカルストレージが有効か確認
+3. プライベートモードを使用していないか確認
+
+## 開発者向け情報
+
+### 認証フローの実装
+
+```typescript
+// アプリ起動時
+await setPersistence(auth, browserLocalPersistence);
+
+// ログイン時
+const result = await signInWithPopup(auth, googleProvider);
 ```
-[AuthContext] Popup blocked or closed, falling back to redirect...
-```
 
-### リダイレクトが失敗する場合
+### なぜリダイレクト方式を使わないのか
 
-カスタムドメインが承認済みドメインに追加されていることを確認してください。追加されていない場合、Firebase認証エラーが発生します。
+1. **App Hostingの制約**: `/__/auth/handler`が提供されない
+2. **シンプルさ**: ポップアップのみの方が実装がシンプル
+3. **ユーザー体験**: 最新のモバイルブラウザはポップアップをサポート
 
 ## 参考リンク
 
-- [Firebase Authentication - Authorized Domains](https://firebase.google.com/docs/auth/web/redirect-best-practices#proxy-requests)
-- [Custom Domain Setup](https://firebase.google.com/docs/hosting/custom-domain)
+- [Firebase Authentication - Popup](https://firebase.google.com/docs/auth/web/google-signin#popup)
+- [Firebase App Hosting](https://firebase.google.com/docs/app-hosting)
