@@ -86,12 +86,22 @@ app.use(morgan('combined'));
 app.use(express.json());
 
 const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
+console.log('CORS allowed origins:', allowed.length > 0 ? allowed : 'all origins (no restriction)');
+
 app.use(cors({
   origin(origin, callback) {
+    console.log('CORS check for origin:', origin);
     if (!origin) return callback(null, true);
-    if (allowed.length === 0 || allowed.includes(origin)) return callback(null, true);
+    if (allowed.length === 0 || allowed.includes(origin)) {
+      console.log('CORS allowed:', origin);
+      return callback(null, true);
+    }
+    console.error('CORS blocked:', origin);
     callback(new Error('Not allowed by CORS'));
   },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // --- 静的ファイル配信 ---
