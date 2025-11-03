@@ -1,8 +1,13 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth, googleProvider, db } from '../services/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { User } from '../types';
+
+// Detect if the device is mobile
+const isMobileDevice = (): boolean => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
 
 interface AuthContextType {
   currentUser: User | null;
@@ -50,35 +55,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signInWithGoogle = async () => {
     setLoadingGoogleSignIn(true);
     setError(null);
+
+    const isMobile = isMobileDevice();
+    console.log('[AuthContext] Device type:', isMobile ? 'Mobile' : 'Desktop');
+
     try {
-      // Open popup immediately on user action to avoid being blocked
-      // Persistence is already set during app initialization
-      console.log('[AuthContext] Opening popup for authentication...');
-      const result = await signInWithPopup(auth, googleProvider);
-      const firebaseUser = result.user;
+      if (isMobile) {
+        // Use redirect for mobile devices
+        console.log('[AuthContext] Using signInWithRedirect for mobile...');
+        await signInWithRedirect(auth, googleProvider);
+        // Note: signInWithRedirect doesn't return here - it navigates away
+        // The result will be handled in the useEffect with getRedirectResult
+      } else {
+        // Use popup for desktop
+        console.log('[AuthContext] Opening popup for authentication...');
+        const result = await signInWithPopup(auth, googleProvider);
+        const firebaseUser = result.user;
 
-      // Immediately map and set the user
-      const newUser = mapFirebaseUserToAppUser(firebaseUser);
-      setCurrentUser(newUser);
-      console.log('[AuthContext] User authenticated:', newUser.email);
+        // Immediately map and set the user
+        const newUser = mapFirebaseUserToAppUser(firebaseUser);
+        setCurrentUser(newUser);
+        console.log('[AuthContext] User authenticated:', newUser.email);
 
-      // Save to Firestore in the background (don't block)
-      const userRef = doc(db, 'users', firebaseUser.uid);
-      getDoc(userRef).then(userSnap => {
-        if (!userSnap.exists()) {
-          setDoc(userRef, newUser).then(() => {
-            console.log('[AuthContext] User saved to Firestore');
-          }).catch(err => {
-            console.error('[AuthContext] Failed to save user to Firestore:', err);
-          });
-        } else {
-          console.log('[AuthContext] User already exists in Firestore');
-        }
-      }).catch(err => {
-        console.error('[AuthContext] Failed to check user in Firestore:', err);
-      });
+        // Save to Firestore in the background (don't block)
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        getDoc(userRef).then(userSnap => {
+          if (!userSnap.exists()) {
+            setDoc(userRef, newUser).then(() => {
+              console.log('[AuthContext] User saved to Firestore');
+            }).catch(err => {
+              console.error('[AuthContext] Failed to save user to Firestore:', err);
+            });
+          } else {
+            console.log('[AuthContext] User already exists in Firestore');
+          }
+        }).catch(err => {
+          console.error('[AuthContext] Failed to check user in Firestore:', err);
+        });
 
-      setLoadingGoogleSignIn(false);
+        setLoadingGoogleSignIn(false);
+      }
     } catch (error: any) {
       console.error('[AuthContext] signInWithGoogle error:', error);
       console.error('[AuthContext] Error code:', error.code);
@@ -116,6 +132,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('[AuthContext] Auth persistence set to LOCAL');
       } catch (error: any) {
         console.error('[AuthContext] Failed to set persistence:', error);
+      }
+
+      // Check for redirect result (for mobile sign-in)
+      try {
+        console.log('[AuthContext] Checking for redirect result...');
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log('[AuthContext] Redirect result found:', result.user.email);
+          const firebaseUser = result.user;
+          const newUser = mapFirebaseUserToAppUser(firebaseUser);
+          setCurrentUser(newUser);
+
+          // Save to Firestore
+          const userRef = doc(db, 'users', firebaseUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            await setDoc(userRef, newUser);
+            console.log('[AuthContext] User saved to Firestore');
+          } else {
+            console.log('[AuthContext] User already exists in Firestore');
+          }
+          setLoadingGoogleSignIn(false);
+        } else {
+          console.log('[AuthContext] No redirect result found');
+        }
+      } catch (error: any) {
+        console.error('[AuthContext] Error checking redirect result:', error);
+        console.error('[AuthContext] Error code:', error.code);
+
+        if (error.code === 'auth/popup-closed-by-user') {
+          setError('認証がキャンセルされました。もう一度お試しください。');
+        } else if (error.code) {
+          setError(`ログインエラー: ${error.message}`);
+        }
+        setLoadingGoogleSignIn(false);
       }
 
       // Set up the auth state listener
