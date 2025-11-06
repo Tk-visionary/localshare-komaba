@@ -60,6 +60,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } else if (authStatus === 'cancelled') {
       setError('認証がキャンセルされました。');
       window.history.replaceState({}, '', window.location.pathname);
+    } else if (authStatus === 'config_error') {
+      setError('サーバーの設定エラーです。管理者に連絡してください。');
+      window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
 
