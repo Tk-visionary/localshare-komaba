@@ -13,8 +13,15 @@ import itemRoutes from './routes/items.js';
 import authRoutes from './routes/auth.js';
 import { authMiddleware } from './middleware/auth.js';
 
-const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env';
-dotenv.config({ path: envFile });
+// Only load .env files in development
+// In production (Cloud Run/App Hosting), environment variables are provided by the platform
+if (process.env.NODE_ENV !== 'production') {
+  const envFile = '.env';
+  dotenv.config({ path: envFile });
+  console.log('[App] Loaded environment variables from', envFile);
+} else {
+  console.log('[App] Running in production - using platform-provided environment variables');
+}
 
 // Log OAuth configuration status (without exposing secrets)
 console.log('[App] OAuth Configuration Check:', {
