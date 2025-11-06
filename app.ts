@@ -16,6 +16,15 @@ import { authMiddleware } from './middleware/auth.js';
 const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env';
 dotenv.config({ path: envFile });
 
+// Log OAuth configuration status (without exposing secrets)
+console.log('[App] OAuth Configuration Check:', {
+  NODE_ENV: process.env.NODE_ENV,
+  hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
+  hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+  hasSessionSecret: !!process.env.SESSION_SECRET,
+  googleRedirectUri: process.env.GOOGLE_REDIRECT_URI || 'not set (will use default)',
+});
+
 // --- Firebase 初期化 ---
 if (admin.apps.length === 0) {
   if (process.env.NODE_ENV === 'test') {
