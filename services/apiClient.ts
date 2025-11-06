@@ -1,5 +1,3 @@
-import { auth } from './firebase';
-
 export class APIError extends Error {
   status: number;
   constructor(message: string, status = 500) {
@@ -22,35 +20,13 @@ async function timeoutPromise<T>(ms: number, p: Promise<T>) {
   }
 }
 
-const getToken = () => {
-  return new Promise<string | null>((resolve, reject) => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      unsubscribe();
-      if (user) {
-        user.getIdToken().then(token => {
-          resolve(token);
-        }).catch(error => {
-          reject(error);
-        });
-      } else {
-        resolve(null);
-      }
-    });
-  });
-};
-
 export async function fetchJson(input: RequestInfo, init?: RequestInit, timeout = DEFAULT_TIMEOUT) {
-  const token = await getToken();
-  let headers = init?.headers || {};
-
-  if (token) {
-    headers = {
-      ...headers,
-      'Authorization': `Bearer ${token}`,
-    };
-  }
-
-  const finalInit = { ...init, headers };
+  // Session-based authentication: no need to manually add tokens
+  // The session cookie is automatically sent with requests
+  const finalInit = {
+    ...init,
+    credentials: 'include' as RequestCredentials, // Ensure cookies are sent
+  };
 
   const res = await timeoutPromise(timeout, fetch(input, finalInit));
   if (!res.ok) {
