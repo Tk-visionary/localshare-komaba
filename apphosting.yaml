@@ -10,12 +10,12 @@ runConfig:
     GOOGLE_CLIENT_ID: 371696877911-5bvpkb4laa0evuvm21ad7ftm4t4m6npp.apps.googleusercontent.com
     GOOGLE_REDIRECT_URI: https://komabasai.local-share.net/auth/callback
   # Defines the secrets that are available to your app.
-  # Format: secretName: environmentVariableName
+  # Each secret name from Secret Manager will be exposed as an environment variable
   secrets:
-    FIREBASE_SERVICE_ACCOUNT: FIREBASE_SERVICE_ACCOUNT
-    FIREBASE_WEBAPP_CONFIG: FIREBASE_WEBAPP_CONFIG
-    GOOGLE_CLIENT_SECRET: GOOGLE_CLIENT_SECRET
-    SESSION_SECRET: SESSION_SECRET
+    - FIREBASE_SERVICE_ACCOUNT
+    - FIREBASE_WEBAPP_CONFIG
+    - GOOGLE_CLIENT_SECRET
+    - SESSION_SECRET
 
 # Defines the settings for your app's build process.
 buildConfig:
