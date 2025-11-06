@@ -21,7 +21,7 @@ Additionally, the app is using MemoryStore for sessions, which causes:
 
 ## Root Causes
 
-There were **TWO CRITICAL ISSUES** preventing environment variables from loading:
+There were **THREE CRITICAL ISSUES** preventing environment variables from loading:
 
 ### Issue 1: dotenv Interfering with Platform Environment Variables (CRITICAL!)
 
@@ -67,20 +67,39 @@ This was confirmed by the Cloud Run logs showing:
 Cloud Run UpdateService asia-east1:localshare-komaba service-371696877911@gcp-sa-firebaseapphosting.iam.gserviceaccount.com
 ```
 
-### Issue 3: Incorrect apphosting.yaml Secrets Format
+### Issue 3: Completely Wrong apphosting.yaml Format (CRITICAL!)
 
-The secrets format was using a map format:
+The **entire structure** of `apphosting.yaml` was incorrect. We were using:
+
 ```yaml
-secrets:
-  GOOGLE_CLIENT_SECRET: GOOGLE_CLIENT_SECRET
+runConfig:
+  environmentVariables:
+    GOOGLE_CLIENT_ID: value
+  secrets:
+    - GOOGLE_CLIENT_SECRET
 ```
 
-Changed to the simpler array format:
+But Firebase App Hosting actually requires the **`env` format**:
+
 ```yaml
-secrets:
-  - GOOGLE_CLIENT_SECRET
-  - SESSION_SECRET
+runConfig:
+  env:
+    - variable: GOOGLE_CLIENT_ID
+      value: 371696877911-5bvpkb4laa0evuvm21ad7ftm4t4m6npp.apps.googleusercontent.com
+      availability:
+        - RUNTIME
+    - variable: GOOGLE_CLIENT_SECRET
+      secret: GOOGLE_CLIENT_SECRET
+      availability:
+        - RUNTIME
 ```
+
+**Why this matters:**
+- The `environmentVariables` and `secrets` format is NOT recognized by Firebase App Hosting
+- Even the hardcoded `GOOGLE_CLIENT_ID` wasn't loading because of the wrong format
+- The `env` array format with `variable`, `value`/`secret`, and `availability` is the documented standard
+
+**Reference:** Firebase App Hosting configuration documentation (2025 format)
 
 ## Fix Steps
 
@@ -89,12 +108,32 @@ secrets:
 The following fixes have been committed and pushed automatically:
 
 1. ✅ **dotenv disabled in production** - `app.ts` updated to skip dotenv.config() when NODE_ENV=production
-2. ✅ **apphosting.yaml secrets format corrected** - Changed from map to array format
-3. ✅ **Permissions script updated** - Now uses correct service account
+2. ✅ **apphosting.yaml COMPLETELY REWRITTEN** - Changed from `environmentVariables`/`secrets` format to correct `env` array format
+3. ✅ **Comprehensive diagnostic logging added** - `app.ts` now logs all env var keys and detailed status
+4. ✅ **Permissions script updated** - Now uses correct service account
+5. ✅ **Diagnostic tool created** - `scripts/diagnose-apphosting-env.sh` checks all configuration
 
-These changes will be deployed automatically on the next push. However, **you still need to manually grant Secret Manager permissions** (see Step 1 below).
+These changes will be deployed automatically. However, **you still need to manually grant Secret Manager permissions** (see Step 1 below).
 
-### Step 1: Grant Secret Manager Permissions (REQUIRED - Manual Step)
+### Step 1: Run Diagnostic Script (Optional but Recommended)
+
+First, run the diagnostic script to check your current configuration:
+
+```bash
+cd /home/user/localshare-komaba
+./scripts/diagnose-apphosting-env.sh
+```
+
+This will check:
+- ✅ If all required secrets exist in Secret Manager
+- ✅ If the service account has proper permissions
+- ✅ If Cloud Run service is configured correctly
+- ✅ If apphosting.yaml format is correct
+- ✅ Current Firebase backend status
+
+The output will tell you exactly what needs to be fixed.
+
+### Step 2: Grant Secret Manager Permissions (REQUIRED - Manual Step)
 
 The permissions script has been updated with the correct service account. Run it:
 
@@ -119,7 +158,7 @@ for SECRET_NAME in FIREBASE_SERVICE_ACCOUNT FIREBASE_WEBAPP_CONFIG GOOGLE_CLIENT
 done
 ```
 
-### Step 2: Verify Permissions
+### Step 3: Verify Permissions
 
 Check that permissions were granted successfully:
 
@@ -136,7 +175,7 @@ bindings:
   role: roles/secretmanager.secretAccessor
 ```
 
-### Step 3: Wait for Automatic Deployment
+### Step 4: Wait for Automatic Deployment
 
 The latest commit with the dotenv fix will be automatically deployed by Firebase App Hosting.
 
@@ -145,17 +184,36 @@ You can monitor the deployment:
 2. Check the deployment status
 3. Once deployed, the new version should use platform environment variables correctly
 
-### Step 4: Verify the Fix
+### Step 5: Verify the Fix with Diagnostic Logs
 
-After redeployment, check the Cloud Run logs:
+After redeployment, check the Cloud Run logs for the new diagnostic output:
 
 1. Go to: https://console.cloud.google.com/run?project=localshare-komaba-54c0d
 2. Click on `localshare-komaba` service
 3. Click on the **LOGS** tab
-4. Look for the OAuth configuration check:
+4. Look for diagnostic messages:
 
-**Expected (after fix):**
+**Expected diagnostic output (after fix):**
 ```
+[App] Running in production - using platform-provided environment variables
+[App] DIAGNOSTIC - Total environment variables: 50+
+[App] DIAGNOSTIC - Environment variable keys: [
+  'NODE_ENV',
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+  'SESSION_SECRET',
+  'GOOGLE_REDIRECT_URI',
+  'ALLOWED_ORIGINS',
+  'FIREBASE_SERVICE_ACCOUNT',
+  'FIREBASE_WEBAPP_CONFIG'
+]
+[App] DIAGNOSTIC - Variable details: {
+  GOOGLE_CLIENT_ID: 'EXISTS (length: 72)',
+  GOOGLE_CLIENT_SECRET: 'EXISTS (length: 35)',
+  SESSION_SECRET: 'EXISTS (length: 64)',
+  GOOGLE_REDIRECT_URI: 'EXISTS (length: 51)',
+  ALLOWED_ORIGINS: 'EXISTS (length: 120)'
+}
 [App] OAuth Configuration Check: {
   NODE_ENV: 'production',
   hasGoogleClientId: true,     ✅
@@ -164,6 +222,8 @@ After redeployment, check the Cloud Run logs:
   googleRedirectUri: 'https://komabasai.local-share.net/auth/callback'
 }
 ```
+
+If you see **UNDEFINED** or **EMPTY_STRING** in the diagnostic output, there's still a configuration issue.
 
 ## Testing Mobile Login
 
