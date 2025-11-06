@@ -10,11 +10,17 @@ const getOAuth2Client = () => {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'https://komabasai.local-share.net/auth/callback';
 
-  console.log('[Auth] Environment check:', {
+  console.log('[Auth] DETAILED Environment check:', {
     hasClientId: !!clientId,
     hasClientSecret: !!clientSecret,
     redirectUri,
     clientIdPrefix: clientId ? clientId.substring(0, 20) + '...' : 'undefined',
+    clientIdLength: clientId ? clientId.length : 0,
+    clientSecretLength: clientSecret ? clientSecret.length : 0,
+    clientIdType: typeof clientId,
+    clientSecretType: typeof clientSecret,
+    clientIdTrimmed: clientId ? clientId.trim() === clientId : 'N/A',
+    clientSecretTrimmed: clientSecret ? clientSecret.trim() === clientSecret : 'N/A',
   });
 
   if (!clientId || !clientSecret) {
@@ -26,7 +32,21 @@ const getOAuth2Client = () => {
     throw error;
   }
 
-  return new OAuth2Client(clientId, clientSecret, redirectUri);
+  // Trim values to remove any accidental whitespace
+  const trimmedClientId = clientId.trim();
+  const trimmedClientSecret = clientSecret.trim();
+  const trimmedRedirectUri = redirectUri.trim();
+
+  console.log('[Auth] Creating OAuth2Client with trimmed values...');
+
+  try {
+    const client = new OAuth2Client(trimmedClientId, trimmedClientSecret, trimmedRedirectUri);
+    console.log('[Auth] OAuth2Client created successfully');
+    return client;
+  } catch (error) {
+    console.error('[Auth] ERROR creating OAuth2Client:', error);
+    throw error;
+  }
 };
 
 // Extend Express Request type to include session
@@ -46,10 +66,19 @@ declare module 'express-session' {
  * Initiates Google OAuth flow by redirecting to Google's authorization page
  */
 router.get('/google', (req: Request, res: Response) => {
+  console.log('[Auth] === /auth/google endpoint HIT ===');
+  console.log('[Auth] Request URL:', req.url);
+  console.log('[Auth] Request headers:', {
+    userAgent: req.get('user-agent'),
+    origin: req.get('origin'),
+    referer: req.get('referer'),
+  });
+
   try {
     console.log('[Auth] Initiating Google OAuth flow...');
     const oauth2Client = getOAuth2Client();
 
+    console.log('[Auth] Generating auth URL...');
     const authorizeUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: [
@@ -59,11 +88,16 @@ router.get('/google', (req: Request, res: Response) => {
       prompt: 'consent select_account', // Force consent screen and account selection
     });
 
+    console.log('[Auth] Auth URL generated successfully. Length:', authorizeUrl.length);
     console.log('[Auth] Redirecting to Google OAuth');
     res.redirect(authorizeUrl);
   } catch (error: any) {
-    console.error('[Auth] Error generating auth URL:', error);
+    console.error('[Auth] ========== ERROR IN /auth/google ==========');
+    console.error('[Auth] Error message:', error.message);
+    console.error('[Auth] Error name:', error.name);
     console.error('[Auth] Error stack:', error.stack);
+    console.error('[Auth] Full error object:', JSON.stringify(error, null, 2));
+    console.error('[Auth] ===============================================');
 
     // Redirect to login page with error
     res.redirect('/?auth=config_error');
