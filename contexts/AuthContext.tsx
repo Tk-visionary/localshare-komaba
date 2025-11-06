@@ -68,12 +68,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signInWithGoogle = () => {
     console.log('[AuthContext] Redirecting to Google OAuth...');
+    console.log('[AuthContext] Target URL: /auth/google');
     setLoadingGoogleSignIn(true);
     setError(null);
 
     // Simple redirect to server-side OAuth endpoint
     // No Firebase SDK, no popup/redirect complexity!
-    window.location.href = '/auth/google';
+
+    // Add a small delay to ensure state is updated
+    setTimeout(() => {
+      console.log('[AuthContext] Executing redirect now...');
+      window.location.href = '/auth/google';
+    }, 100);
   };
 
   const logout = async () => {
