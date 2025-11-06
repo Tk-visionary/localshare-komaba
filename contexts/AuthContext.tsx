@@ -1,38 +1,16 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { auth, googleProvider, db } from '../services/firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { User } from '../types';
-
-// Detect if the device is mobile
-const isMobileDevice = (): boolean => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-};
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  signup: (email: string, password: string) => Promise<UserCredential>;
-  login: (email: string, password: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  signInWithGoogle: () => void;
   loadingGoogleSignIn: boolean;
   error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Function to map Firebase User to our app's User type
-const mapFirebaseUserToAppUser = (firebaseUser: FirebaseUser): User => {
-    const { uid, displayName, email, photoURL } = firebaseUser;
-    return {
-        id: uid,
-        name: displayName || 'No Name',
-        email: email || 'No Email',
-        picture: photoURL || undefined,
-    };
-};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -40,179 +18,86 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loadingGoogleSignIn, setLoadingGoogleSignIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const signup = (email: string, password: string) => {
-    return createUserWithEmailAndPassword(auth, email, password);
-  };
+  // Fetch current user on mount
+  useEffect(() => {
+    const fetchUser = async () => {
+      console.log('[AuthContext] Fetching current user...');
+      try {
+        const response = await fetch('/auth/me', {
+          credentials: 'include', // Important: include cookies
+        });
 
-  const login = (email: string, password: string) => {
-    return signInWithEmailAndPassword(auth, email, password);
-  };
+        if (response.ok) {
+          const user = await response.json();
+          console.log('[AuthContext] User is logged in:', user.email);
+          setCurrentUser(user);
+        } else {
+          console.log('[AuthContext] User is not logged in');
+          setCurrentUser(null);
+        }
+      } catch (error) {
+        console.error('[AuthContext] Error fetching user:', error);
+        setCurrentUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const logout = () => {
-    return signOut(auth);
-  };
+    fetchUser();
 
-  const signInWithGoogle = async () => {
+    // Check for auth callback status in URL
+    const params = new URLSearchParams(window.location.search);
+    const authStatus = params.get('auth');
+
+    if (authStatus === 'success') {
+      console.log('[AuthContext] Authentication successful');
+      // Remove the query parameter and reload user
+      window.history.replaceState({}, '', window.location.pathname);
+      fetchUser();
+    } else if (authStatus === 'error') {
+      setError('認証中にエラーが発生しました。もう一度お試しください。');
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (authStatus === 'cancelled') {
+      setError('認証がキャンセルされました。');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  const signInWithGoogle = () => {
+    console.log('[AuthContext] Redirecting to Google OAuth...');
     setLoadingGoogleSignIn(true);
     setError(null);
 
-    const isMobile = isMobileDevice();
-    console.log('[AuthContext] Device type:', isMobile ? 'Mobile' : 'Desktop');
+    // Simple redirect to server-side OAuth endpoint
+    // No Firebase SDK, no popup/redirect complexity!
+    window.location.href = '/auth/google';
+  };
 
+  const logout = async () => {
+    console.log('[AuthContext] Logging out...');
     try {
-      if (isMobile) {
-        // Use redirect for mobile devices
-        console.log('[AuthContext] Using signInWithRedirect for mobile...');
-        await signInWithRedirect(auth, googleProvider);
-        // Note: signInWithRedirect doesn't return here - it navigates away
-        // The result will be handled in the useEffect with getRedirectResult
+      const response = await fetch('/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        setCurrentUser(null);
+        console.log('[AuthContext] Logout successful');
       } else {
-        // Use popup for desktop
-        console.log('[AuthContext] Opening popup for authentication...');
-        const result = await signInWithPopup(auth, googleProvider);
-        const firebaseUser = result.user;
-
-        // Immediately map and set the user
-        const newUser = mapFirebaseUserToAppUser(firebaseUser);
-        setCurrentUser(newUser);
-        console.log('[AuthContext] User authenticated:', newUser.email);
-
-        // Save to Firestore in the background (don't block)
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        getDoc(userRef).then(userSnap => {
-          if (!userSnap.exists()) {
-            setDoc(userRef, newUser).then(() => {
-              console.log('[AuthContext] User saved to Firestore');
-            }).catch(err => {
-              console.error('[AuthContext] Failed to save user to Firestore:', err);
-            });
-          } else {
-            console.log('[AuthContext] User already exists in Firestore');
-          }
-        }).catch(err => {
-          console.error('[AuthContext] Failed to check user in Firestore:', err);
-        });
-
-        setLoadingGoogleSignIn(false);
+        throw new Error('Logout failed');
       }
-    } catch (error: any) {
-      console.error('[AuthContext] signInWithGoogle error:', error);
-      console.error('[AuthContext] Error code:', error.code);
-
-      // Provide user-friendly error messages
-      if (error.code === 'auth/popup-closed-by-user') {
-        setError('⚠️ 認証タブを最後まで開いたままにしてください。「許可」をクリックした後、自動で元のページに戻ります。手動でタブを切り替えないでください。');
-      } else if (error.code === 'auth/popup-blocked') {
-        setError('ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。');
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        setError('複数のポップアップが開かれました。もう一度お試しください。');
-      } else {
-        setError(`ログインエラー: ${error.message}`);
-      }
-
-      setLoadingGoogleSignIn(false);
-      throw error;
+    } catch (error) {
+      console.error('[AuthContext] Logout error:', error);
+      setError('ログアウト中にエラーが発生しました。');
     }
   };
-
-  const resetPassword = (email: string) => {
-    return sendPasswordResetEmail(auth, email);
-  };
-
-  useEffect(() => {
-    let unsubscribe: (() => void) | null = null;
-
-    const initializeAuth = async () => {
-      console.log('[AuthContext] Initializing auth...');
-
-      // Set persistence FIRST - this ensures auth state survives page reloads
-      try {
-        console.log('[AuthContext] Setting auth persistence to LOCAL...');
-        await setPersistence(auth, browserLocalPersistence);
-        console.log('[AuthContext] Auth persistence set to LOCAL');
-      } catch (error: any) {
-        console.error('[AuthContext] Failed to set persistence:', error);
-      }
-
-      // Check for redirect result (for mobile sign-in)
-      try {
-        console.log('[AuthContext] Checking for redirect result...');
-        const result = await getRedirectResult(auth);
-        if (result) {
-          console.log('[AuthContext] Redirect result found:', result.user.email);
-          const firebaseUser = result.user;
-          const newUser = mapFirebaseUserToAppUser(firebaseUser);
-          setCurrentUser(newUser);
-
-          // Save to Firestore
-          const userRef = doc(db, 'users', firebaseUser.uid);
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) {
-            await setDoc(userRef, newUser);
-            console.log('[AuthContext] User saved to Firestore');
-          } else {
-            console.log('[AuthContext] User already exists in Firestore');
-          }
-          setLoadingGoogleSignIn(false);
-        } else {
-          console.log('[AuthContext] No redirect result found');
-        }
-      } catch (error: any) {
-        console.error('[AuthContext] Error checking redirect result:', error);
-        console.error('[AuthContext] Error code:', error.code);
-
-        if (error.code === 'auth/popup-closed-by-user') {
-          setError('認証がキャンセルされました。もう一度お試しください。');
-        } else if (error.code) {
-          setError(`ログインエラー: ${error.message}`);
-        }
-        setLoadingGoogleSignIn(false);
-      }
-
-      // Set up the auth state listener
-      console.log('[AuthContext] Setting up auth state listener...');
-      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        console.log('[AuthContext] Auth state changed:', firebaseUser?.email || 'null');
-        if (firebaseUser) {
-          console.log('[AuthContext] User is logged in:', firebaseUser.email);
-          const userRef = doc(db, 'users', firebaseUser.uid);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            setCurrentUser(userSnap.data() as User);
-            console.log('[AuthContext] User data loaded from Firestore');
-          } else {
-            // Create a new user document in Firestore if it doesn't exist
-            const newUser = mapFirebaseUserToAppUser(firebaseUser);
-            await setDoc(userRef, newUser);
-            setCurrentUser(newUser);
-            console.log('[AuthContext] New user created in Firestore');
-          }
-        } else {
-          console.log('[AuthContext] User is logged out');
-          setCurrentUser(null);
-        }
-        setLoading(false);
-        console.log('[AuthContext] Loading complete');
-      });
-    };
-
-    initializeAuth();
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, []);
 
   const value = {
     currentUser,
     loading,
-    signup,
-    login,
     logout,
     signInWithGoogle,
-    resetPassword,
     loadingGoogleSignIn,
     error,
   };
