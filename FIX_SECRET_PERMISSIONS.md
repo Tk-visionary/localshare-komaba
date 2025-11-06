@@ -15,8 +15,8 @@
 PROJECT_ID="localshare-komaba-54c0d"
 PROJECT_NUMBER="371696877911"
 
-# App Hosting のデフォルトサービスアカウント
-SERVICE_ACCOUNT="firebase-app-hosting-compute@${PROJECT_ID}.iam.gserviceaccount.com"
+# App Hosting の実際のサービスアカウント (Cloud Run ログから確認)
+SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"
 
 # GOOGLE_CLIENT_SECRET への読み取り権限を付与
 gcloud secrets add-iam-policy-binding GOOGLE_CLIENT_SECRET \
@@ -51,7 +51,7 @@ echo "✅ 権限設定完了！"
 
 5. **プリンシパルを追加:**
    ```
-   New principals: firebase-app-hosting-compute@localshare-komaba-54c0d.iam.gserviceaccount.com
+   New principals: service-371696877911@gcp-sa-firebaseapphosting.iam.gserviceaccount.com
    ```
 
 6. **ロールを選択:**
@@ -71,7 +71,8 @@ echo "✅ 権限設定完了！"
 
 ```bash
 PROJECT_ID="localshare-komaba-54c0d"
-SERVICE_ACCOUNT="firebase-app-hosting-compute@${PROJECT_ID}.iam.gserviceaccount.com"
+PROJECT_NUMBER="371696877911"
+SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"
 
 # プロジェクト全体の Secret Manager Accessor 権限を付与
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
@@ -97,7 +98,7 @@ gcloud secrets get-iam-policy SESSION_SECRET --project=localshare-komaba-54c0d
 ```yaml
 bindings:
 - members:
-  - serviceAccount:firebase-app-hosting-compute@localshare-komaba-54c0d.iam.gserviceaccount.com
+  - serviceAccount:service-371696877911@gcp-sa-firebaseapphosting.iam.gserviceaccount.com
   role: roles/secretmanager.secretAccessor
 ```
 
