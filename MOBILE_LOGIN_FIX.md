@@ -19,11 +19,46 @@ Additionally, the app is using MemoryStore for sessions, which causes:
 - Memory leaks in production
 - Sessions not persisting across multiple Cloud Run instances
 
-## Root Cause
+## Root Causes
 
-The secrets are defined in `apphosting.yaml` and exist in Secret Manager, but **the Firebase App Hosting service account does not have permission to read them**.
+There were **TWO CRITICAL ISSUES** preventing environment variables from loading:
 
-The previous permission setup script was using the wrong service account:
+### Issue 1: dotenv Interfering with Platform Environment Variables (CRITICAL!)
+
+The app was trying to load environment variables from a `.env.prod` file that doesn't exist:
+
+```
+[dotenv@17.2.3] injecting env (0) from .env.prod
+```
+
+The "(0)" means **zero environment variables** were loaded. The `app.ts` file was calling:
+
+```typescript
+const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env';
+dotenv.config({ path: envFile });
+```
+
+**Why this breaks everything:**
+- In Cloud Run/Firebase App Hosting, environment variables are provided by the platform via `apphosting.yaml`
+- The `.env.prod` file doesn't exist in the deployed container (and shouldn't - secrets must never be in git)
+- dotenv's config call was preventing the platform environment variables from being used
+- Even the `GOOGLE_CLIENT_ID` (which was hardcoded in `apphosting.yaml`) wasn't available
+
+**The Fix:**
+Only use dotenv in development mode. In production, Cloud Run provides environment variables directly:
+
+```typescript
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: '.env' });
+} else {
+  console.log('[App] Running in production - using platform-provided environment variables');
+}
+```
+
+### Issue 2: Wrong Service Account for Secret Manager Permissions
+
+Even after fixing the dotenv issue, secrets still need proper permissions. The permission script was using the wrong service account:
+
 - ❌ OLD: `firebase-app-hosting-compute@localshare-komaba-54c0d.iam.gserviceaccount.com`
 - ✅ NEW: `service-371696877911@gcp-sa-firebaseapphosting.iam.gserviceaccount.com`
 
@@ -32,9 +67,34 @@ This was confirmed by the Cloud Run logs showing:
 Cloud Run UpdateService asia-east1:localshare-komaba service-371696877911@gcp-sa-firebaseapphosting.iam.gserviceaccount.com
 ```
 
+### Issue 3: Incorrect apphosting.yaml Secrets Format
+
+The secrets format was using a map format:
+```yaml
+secrets:
+  GOOGLE_CLIENT_SECRET: GOOGLE_CLIENT_SECRET
+```
+
+Changed to the simpler array format:
+```yaml
+secrets:
+  - GOOGLE_CLIENT_SECRET
+  - SESSION_SECRET
+```
+
 ## Fix Steps
 
-### Step 1: Run the Updated Permissions Script
+### Step 0: Automatic Fixes (Already Applied)
+
+The following fixes have been committed and pushed automatically:
+
+1. ✅ **dotenv disabled in production** - `app.ts` updated to skip dotenv.config() when NODE_ENV=production
+2. ✅ **apphosting.yaml secrets format corrected** - Changed from map to array format
+3. ✅ **Permissions script updated** - Now uses correct service account
+
+These changes will be deployed automatically on the next push. However, **you still need to manually grant Secret Manager permissions** (see Step 1 below).
+
+### Step 1: Grant Secret Manager Permissions (REQUIRED - Manual Step)
 
 The permissions script has been updated with the correct service account. Run it:
 
@@ -76,14 +136,14 @@ bindings:
   role: roles/secretmanager.secretAccessor
 ```
 
-### Step 3: Redeploy
+### Step 3: Wait for Automatic Deployment
 
-After granting permissions, redeploy the application:
+The latest commit with the dotenv fix will be automatically deployed by Firebase App Hosting.
 
-```bash
-git commit --allow-empty -m "chore: trigger redeploy after secret permissions fix"
-git push
-```
+You can monitor the deployment:
+1. Go to Firebase Console: https://console.firebase.google.com/project/localshare-komaba-54c0d/apphosting
+2. Check the deployment status
+3. Once deployed, the new version should use platform environment variables correctly
 
 ### Step 4: Verify the Fix
 
