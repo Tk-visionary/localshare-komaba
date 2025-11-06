@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import admin from 'firebase-admin';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import session from 'express-session';
 
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -9,7 +10,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import uploadRoutes from './routes/upload.js';
 import itemRoutes from './routes/items.js';
-import { firebaseAuthMiddleware } from './middleware/auth.js';
+import authRoutes from './routes/auth.js';
+import { authMiddleware } from './middleware/auth.js';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env';
 dotenv.config({ path: envFile });
@@ -85,6 +87,19 @@ app.use(
 app.use(morgan('combined'));
 app.use(express.json());
 
+// --- Session Configuration ---
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-this-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    sameSite: 'lax',
+  },
+}));
+
 const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
 console.log('CORS allowed origins:', allowed.length > 0 ? allowed : 'all origins (no restriction)');
 
@@ -119,8 +134,11 @@ app.use(express.static(path.join(__dirname, "client"), {
 }));
 
 // --- ルーティング ---
+// Authentication routes (must come before other protected routes)
+app.use('/auth', authRoutes);
+
 // Upload always requires authentication
-app.use('/upload', firebaseAuthMiddleware, uploadRoutes);
+app.use('/upload', authMiddleware, uploadRoutes);
 // Items routes handle authentication per-route (GET is public, POST/PUT/DELETE require auth)
 app.use('/api/items', itemRoutes);
 
