@@ -7,10 +7,14 @@ runConfig:
   environmentVariables:
     NODE_ENV: production
     ALLOWED_ORIGINS: https://komabasai.local-share.net,https://localshare-komaba--localshare-komaba-54c0d.asia-east1.hosted.app
+    GOOGLE_CLIENT_ID: 371696877911-5bvpkb4laa0evuvm21ad7ftm4t4m6npp.apps.googleusercontent.com
+    GOOGLE_REDIRECT_URI: https://komabasai.local-share.net/auth/callback
   # Defines the secrets that are available to your app.
   secrets:
     - secret: FIREBASE_SERVICE_ACCOUNT
     - secret: FIREBASE_WEBAPP_CONFIG
+    - secret: GOOGLE_CLIENT_SECRET
+    - secret: SESSION_SECRET
 
 # Defines the settings for your app's build process.
 buildConfig:
