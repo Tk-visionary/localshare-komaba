@@ -10,8 +10,20 @@ const getOAuth2Client = () => {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'https://komabasai.local-share.net/auth/callback';
 
+  console.log('[Auth] Environment check:', {
+    hasClientId: !!clientId,
+    hasClientSecret: !!clientSecret,
+    redirectUri,
+    clientIdPrefix: clientId ? clientId.substring(0, 20) + '...' : 'undefined',
+  });
+
   if (!clientId || !clientSecret) {
-    throw new Error('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set in environment variables');
+    const error = new Error('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set in environment variables');
+    console.error('[Auth] Missing OAuth credentials:', {
+      GOOGLE_CLIENT_ID: clientId ? 'present' : 'MISSING',
+      GOOGLE_CLIENT_SECRET: clientSecret ? 'present' : 'MISSING',
+    });
+    throw error;
   }
 
   return new OAuth2Client(clientId, clientSecret, redirectUri);
@@ -35,6 +47,7 @@ declare module 'express-session' {
  */
 router.get('/google', (req: Request, res: Response) => {
   try {
+    console.log('[Auth] Initiating Google OAuth flow...');
     const oauth2Client = getOAuth2Client();
 
     const authorizeUrl = oauth2Client.generateAuthUrl({
@@ -46,11 +59,14 @@ router.get('/google', (req: Request, res: Response) => {
       prompt: 'consent select_account', // Force consent screen and account selection
     });
 
-    console.log('[Auth] Redirecting to Google OAuth:', authorizeUrl);
+    console.log('[Auth] Redirecting to Google OAuth');
     res.redirect(authorizeUrl);
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Auth] Error generating auth URL:', error);
-    res.status(500).json({ error: 'Failed to initiate authentication' });
+    console.error('[Auth] Error stack:', error.stack);
+
+    // Redirect to login page with error
+    res.redirect('/?auth=config_error');
   }
 });
 
