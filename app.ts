@@ -21,6 +21,37 @@ if (process.env.NODE_ENV !== 'production') {
   console.log('[App] Loaded environment variables from', envFile);
 } else {
   console.log('[App] Running in production - using platform-provided environment variables');
+
+  // DIAGNOSTIC: Log all environment variable keys (not values!) to debug injection
+  const allEnvKeys = Object.keys(process.env);
+  console.log('[App] DIAGNOSTIC - Total environment variables:', allEnvKeys.length);
+  console.log('[App] DIAGNOSTIC - Environment variable keys:', allEnvKeys.filter(key =>
+    // Only log app-specific keys, not all system keys
+    key.includes('GOOGLE') ||
+    key.includes('SESSION') ||
+    key.includes('FIREBASE') ||
+    key.includes('ALLOWED') ||
+    key.includes('NODE_ENV')
+  ));
+
+  // DIAGNOSTIC: Check if variables exist but are empty
+  console.log('[App] DIAGNOSTIC - Variable details:', {
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID === undefined ? 'UNDEFINED' :
+                      process.env.GOOGLE_CLIENT_ID === '' ? 'EMPTY_STRING' :
+                      `EXISTS (length: ${process.env.GOOGLE_CLIENT_ID.length})`,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET === undefined ? 'UNDEFINED' :
+                          process.env.GOOGLE_CLIENT_SECRET === '' ? 'EMPTY_STRING' :
+                          `EXISTS (length: ${process.env.GOOGLE_CLIENT_SECRET.length})`,
+    SESSION_SECRET: process.env.SESSION_SECRET === undefined ? 'UNDEFINED' :
+                    process.env.SESSION_SECRET === '' ? 'EMPTY_STRING' :
+                    `EXISTS (length: ${process.env.SESSION_SECRET.length})`,
+    GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI === undefined ? 'UNDEFINED' :
+                         process.env.GOOGLE_REDIRECT_URI === '' ? 'EMPTY_STRING' :
+                         `EXISTS (length: ${process.env.GOOGLE_REDIRECT_URI.length})`,
+    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS === undefined ? 'UNDEFINED' :
+                     process.env.ALLOWED_ORIGINS === '' ? 'EMPTY_STRING' :
+                     `EXISTS (length: ${process.env.ALLOWED_ORIGINS.length})`,
+  });
 }
 
 // Log OAuth configuration status (without exposing secrets)
