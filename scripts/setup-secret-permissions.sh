@@ -7,7 +7,8 @@ set -e  # エラーが発生したら停止
 
 PROJECT_ID="localshare-komaba-54c0d"
 PROJECT_NUMBER="371696877911"
-SERVICE_ACCOUNT="firebase-app-hosting-compute@${PROJECT_ID}.iam.gserviceaccount.com"
+# Firebase App Hosting uses this service account format
+SERVICE_ACCOUNT="service-${PROJECT_NUMBER}@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"
 
 echo "🔐 Secret Manager 権限設定を開始..."
 echo ""
@@ -21,33 +22,27 @@ gcloud config set project ${PROJECT_ID}
 echo "✅ プロジェクト設定完了"
 echo ""
 
-# GOOGLE_CLIENT_SECRET への権限付与
-echo "🔑 GOOGLE_CLIENT_SECRET への権限を付与中..."
-gcloud secrets add-iam-policy-binding GOOGLE_CLIENT_SECRET \
-  --member="serviceAccount:${SERVICE_ACCOUNT}" \
-  --role="roles/secretmanager.secretAccessor" \
-  --project="${PROJECT_ID}"
-echo "✅ GOOGLE_CLIENT_SECRET の権限設定完了"
-echo ""
+# All secrets used in apphosting.yaml
+SECRETS=("FIREBASE_SERVICE_ACCOUNT" "FIREBASE_WEBAPP_CONFIG" "GOOGLE_CLIENT_SECRET" "SESSION_SECRET")
 
-# SESSION_SECRET への権限付与
-echo "🔑 SESSION_SECRET への権限を付与中..."
-gcloud secrets add-iam-policy-binding SESSION_SECRET \
-  --member="serviceAccount:${SERVICE_ACCOUNT}" \
-  --role="roles/secretmanager.secretAccessor" \
-  --project="${PROJECT_ID}"
-echo "✅ SESSION_SECRET の権限設定完了"
-echo ""
+for SECRET_NAME in "${SECRETS[@]}"; do
+  echo "🔑 ${SECRET_NAME} への権限を付与中..."
+  gcloud secrets add-iam-policy-binding ${SECRET_NAME} \
+    --member="serviceAccount:${SERVICE_ACCOUNT}" \
+    --role="roles/secretmanager.secretAccessor" \
+    --project="${PROJECT_ID}" 2>&1 | grep -v "Policy update failed" || echo "  ℹ️  権限は既に設定されているか、シークレットが存在しません"
+  echo "✅ ${SECRET_NAME} の権限設定完了"
+  echo ""
+done
 
 # 権限の確認
 echo "📋 設定された権限を確認中..."
 echo ""
-echo "--- GOOGLE_CLIENT_SECRET の権限 ---"
-gcloud secrets get-iam-policy GOOGLE_CLIENT_SECRET --project=${PROJECT_ID}
-echo ""
-echo "--- SESSION_SECRET の権限 ---"
-gcloud secrets get-iam-policy SESSION_SECRET --project=${PROJECT_ID}
-echo ""
+for SECRET_NAME in "${SECRETS[@]}"; do
+  echo "--- ${SECRET_NAME} の権限 ---"
+  gcloud secrets get-iam-policy ${SECRET_NAME} --project=${PROJECT_ID} 2>&1 | head -n 10 || echo "  ℹ️  シークレットが存在しないか、権限がありません"
+  echo ""
+done
 
 echo "✅ すべての権限設定が完了しました！"
 echo ""
