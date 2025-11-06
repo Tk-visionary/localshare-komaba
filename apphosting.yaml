@@ -2,20 +2,45 @@
 schemaVersion: v1alpha1
 
 # Defines the environment variables and secrets that are available to your app.
+# Reference: https://firebase.google.com/docs/app-hosting/configure
 runConfig:
-  # Defines the environment variables that are available to your app.
-  environmentVariables:
-    NODE_ENV: production
-    ALLOWED_ORIGINS: https://komabasai.local-share.net,https://localshare-komaba--localshare-komaba-54c0d.asia-east1.hosted.app
-    GOOGLE_CLIENT_ID: 371696877911-5bvpkb4laa0evuvm21ad7ftm4t4m6npp.apps.googleusercontent.com
-    GOOGLE_REDIRECT_URI: https://komabasai.local-share.net/auth/callback
-  # Defines the secrets that are available to your app.
-  # Each secret name from Secret Manager will be exposed as an environment variable
-  secrets:
-    - FIREBASE_SERVICE_ACCOUNT
-    - FIREBASE_WEBAPP_CONFIG
-    - GOOGLE_CLIENT_SECRET
-    - SESSION_SECRET
+  # Environment variables can be plain values or references to Secret Manager secrets
+  env:
+    # Plain environment variables (available at BUILD and RUNTIME)
+    - variable: NODE_ENV
+      value: production
+      availability:
+        - BUILD
+        - RUNTIME
+    - variable: ALLOWED_ORIGINS
+      value: https://komabasai.local-share.net,https://localshare-komaba--localshare-komaba-54c0d.asia-east1.hosted.app
+      availability:
+        - RUNTIME
+    - variable: GOOGLE_CLIENT_ID
+      value: 371696877911-5bvpkb4laa0evuvm21ad7ftm4t4m6npp.apps.googleusercontent.com
+      availability:
+        - RUNTIME
+    - variable: GOOGLE_REDIRECT_URI
+      value: https://komabasai.local-share.net/auth/callback
+      availability:
+        - RUNTIME
+    # Secret Manager references (available at RUNTIME only)
+    - variable: GOOGLE_CLIENT_SECRET
+      secret: GOOGLE_CLIENT_SECRET
+      availability:
+        - RUNTIME
+    - variable: SESSION_SECRET
+      secret: SESSION_SECRET
+      availability:
+        - RUNTIME
+    - variable: FIREBASE_SERVICE_ACCOUNT
+      secret: FIREBASE_SERVICE_ACCOUNT
+      availability:
+        - RUNTIME
+    - variable: FIREBASE_WEBAPP_CONFIG
+      secret: FIREBASE_WEBAPP_CONFIG
+      availability:
+        - RUNTIME
 
 # Defines the settings for your app's build process.
 buildConfig:
