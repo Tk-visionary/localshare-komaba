@@ -1,3 +1,5 @@
+import { auth } from './firebase';
+
 export class APIError extends Error {
   status: number;
   constructor(message: string, status = 500) {
@@ -20,12 +22,31 @@ async function timeoutPromise<T>(ms: number, p: Promise<T>) {
   }
 }
 
+/**
+ * Fetch wrapper that automatically includes Firebase ID token in requests
+ */
 export async function fetchJson(input: RequestInfo, init?: RequestInit, timeout = DEFAULT_TIMEOUT) {
-  // Session-based authentication: no need to manually add tokens
-  // The session cookie is automatically sent with requests
-  const finalInit = {
+  // Get Firebase ID token if user is authenticated
+  let idToken: string | null = null;
+  if (auth.currentUser) {
+    try {
+      idToken = await auth.currentUser.getIdToken();
+      console.log('[ApiClient] ID token obtained for request');
+    } catch (error) {
+      console.error('[ApiClient] Failed to get ID token:', error);
+    }
+  }
+
+  // Prepare headers with Authorization if token is available
+  const headers = new Headers(init?.headers);
+  if (idToken) {
+    headers.set('Authorization', `Bearer ${idToken}`);
+  }
+
+  const finalInit: RequestInit = {
     ...init,
-    credentials: 'include' as RequestCredentials, // Ensure cookies are sent
+    headers,
+    credentials: 'include', // Include cookies for CORS
   };
 
   const res = await timeoutPromise(timeout, fetch(input, finalInit));
