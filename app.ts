@@ -86,6 +86,9 @@ app.use(
         "base-uri": ["'self'"],
       },
     },
+    // Allow popups for Firebase Authentication
+    // Default 'same-origin' blocks auth popups, 'same-origin-allow-popups' allows them
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   })
 );
 
