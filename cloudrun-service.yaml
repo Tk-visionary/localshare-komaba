@@ -1,0 +1,56 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: localshare-komaba
+  labels:
+    cloud.googleapis.com/location: asia-east1
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/client-name: gcloud
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen1
+        autoscaling.knative.dev/maxScale: '100'
+        run.googleapis.com/startup-cpu-boost: 'true'
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      serviceAccountName: service-371696877911@gcp-sa-firebaseapphosting.iam.gserviceaccount.com
+      containers:
+      - image: asia-east1-docker.pkg.dev/localshare-komaba-54c0d/firebaseapphosting-images/localshare-komaba:latest
+        ports:
+        - name: http1
+          containerPort: 8080
+        env:
+        - name: FIREBASE_CONFIG
+          value: '{"databaseURL":"","projectId":"localshare-komaba-54c0d","storageBucket":"localshare-komaba-54c0d.firebasestorage.app"}'
+        - name: NODE_ENV
+          value: production
+        - name: ALLOWED_ORIGINS
+          value: https://komabasai.local-share.net,https://localshare-komaba--localshare-komaba-54c0d.asia-east1.hosted.app
+        - name: GOOGLE_CLIENT_ID
+          value: 371696877911-5bvpkb4laa0evuvm21ad7ftm4t4m6npp.apps.googleusercontent.com
+        - name: GOOGLE_REDIRECT_URI
+          value: https://komabasai.local-share.net/auth/callback
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: GOOGLE_CLIENT_SECRET
+        - name: SESSION_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: SESSION_SECRET
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+        startupProbe:
+          timeoutSeconds: 240
+          periodSeconds: 240
+          failureThreshold: 1
+          tcpSocket:
+            port: 8080
