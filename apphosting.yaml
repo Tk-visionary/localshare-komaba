@@ -16,23 +16,7 @@ runConfig:
       value: https://komabasai.local-share.net,https://localshare-komaba--localshare-komaba-54c0d.asia-east1.hosted.app
       availability:
         - RUNTIME
-    - variable: GOOGLE_CLIENT_ID
-      value: 371696877911-5bvpkb4laa0evuvm21ad7ftm4t4m6npp.apps.googleusercontent.com
-      availability:
-        - RUNTIME
-    - variable: GOOGLE_REDIRECT_URI
-      value: https://komabasai.local-share.net/auth/callback
-      availability:
-        - RUNTIME
-    # Secret Manager references (available at RUNTIME only)
-    - variable: GOOGLE_CLIENT_SECRET
-      secret: GOOGLE_CLIENT_SECRET
-      availability:
-        - RUNTIME
-    - variable: SESSION_SECRET
-      secret: SESSION_SECRET
-      availability:
-        - RUNTIME
+    # Secret Manager references
     - variable: FIREBASE_SERVICE_ACCOUNT
       secret: FIREBASE_SERVICE_ACCOUNT
       availability:
@@ -40,6 +24,7 @@ runConfig:
     - variable: FIREBASE_WEBAPP_CONFIG
       secret: FIREBASE_WEBAPP_CONFIG
       availability:
+        - BUILD
         - RUNTIME
 
 # Defines the settings for your app's build process.
