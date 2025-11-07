@@ -2,8 +2,26 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// Parse Firebase Web App config from environment variable
+const getFirebaseConfig = () => {
+  try {
+    if (process.env.FIREBASE_WEBAPP_CONFIG) {
+      return JSON.parse(process.env.FIREBASE_WEBAPP_CONFIG);
+    }
+  } catch (error) {
+    console.warn('[Vite] Failed to parse FIREBASE_WEBAPP_CONFIG:', error);
+  }
+  return {};
+};
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  const firebaseConfig = getFirebaseConfig();
+
+  console.log('[Vite] Firebase config loaded:', {
+    hasApiKey: !!firebaseConfig.apiKey,
+    projectId: firebaseConfig.projectId || 'not set',
+  });
 
   return {
     plugins: [react()],
@@ -24,5 +42,15 @@ export default defineConfig(({ mode }) => {
         }
       },
     },
+    // Expose Firebase config to client-side code
+    define: {
+      'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(firebaseConfig.apiKey || ''),
+      'import.meta.env.VITE_FIREBASE_AUTH_DOMAIN': JSON.stringify(firebaseConfig.authDomain || ''),
+      'import.meta.env.VITE_FIREBASE_PROJECT_ID': JSON.stringify(firebaseConfig.projectId || ''),
+      'import.meta.env.VITE_FIREBASE_STORAGE_BUCKET': JSON.stringify(firebaseConfig.storageBucket || ''),
+      'import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID': JSON.stringify(firebaseConfig.messagingSenderId || ''),
+      'import.meta.env.VITE_FIREBASE_APP_ID': JSON.stringify(firebaseConfig.appId || ''),
+      'import.meta.env.VITE_FIREBASE_MEASUREMENT_ID': JSON.stringify(firebaseConfig.measurementId || ''),
+    }
   };
 });

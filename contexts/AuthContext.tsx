@@ -1,4 +1,12 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import {
+  signInWithRedirect,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  getRedirectResult,
+  User as FirebaseUser
+} from 'firebase/auth';
+import { auth, googleProvider } from '../services/firebase';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -8,6 +16,7 @@ interface AuthContextType {
   signInWithGoogle: () => void;
   loadingGoogleSignIn: boolean;
   error: string | null;
+  idToken: string | null; // ID token for API requests
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,85 +26,122 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [loadingGoogleSignIn, setLoadingGoogleSignIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [idToken, setIdToken] = useState<string | null>(null);
 
-  // Fetch current user on mount
-  useEffect(() => {
-    const fetchUser = async () => {
-      console.log('[AuthContext] Fetching current user...');
+  // Convert Firebase User to our User type
+  const convertFirebaseUser = async (firebaseUser: FirebaseUser): Promise<User> => {
+    return {
+      id: firebaseUser.uid,
+      name: firebaseUser.displayName || 'No Name',
+      email: firebaseUser.email || '',
+      picture: firebaseUser.photoURL || undefined,
+    };
+  };
+
+  // Fetch and update ID token
+  const updateIdToken = async (firebaseUser: FirebaseUser | null) => {
+    if (firebaseUser) {
       try {
-        const response = await fetch('/auth/me', {
-          credentials: 'include', // Important: include cookies
-        });
-
-        if (response.ok) {
-          const user = await response.json();
-          console.log('[AuthContext] User is logged in:', user.email);
-          setCurrentUser(user);
-        } else {
-          console.log('[AuthContext] User is not logged in');
-          setCurrentUser(null);
-        }
+        const token = await firebaseUser.getIdToken();
+        setIdToken(token);
+        console.log('[AuthContext] ID token updated');
       } catch (error) {
-        console.error('[AuthContext] Error fetching user:', error);
-        setCurrentUser(null);
+        console.error('[AuthContext] Error getting ID token:', error);
+        setIdToken(null);
+      }
+    } else {
+      setIdToken(null);
+    }
+  };
+
+  // Check for redirect result on mount
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        console.log('[AuthContext] Checking redirect result...');
+        const result = await getRedirectResult(auth);
+
+        if (result) {
+          console.log('[AuthContext] Redirect result found:', result.user.email);
+          const user = await convertFirebaseUser(result.user);
+          setCurrentUser(user);
+          await updateIdToken(result.user);
+          setError(null);
+        }
+      } catch (error: any) {
+        console.error('[AuthContext] Error handling redirect result:', error);
+        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+          setError('認証がキャンセルされました。');
+        } else {
+          setError('認証中にエラーが発生しました。もう一度お試しください。');
+        }
       } finally {
-        setLoading(false);
+        setLoadingGoogleSignIn(false);
       }
     };
 
-    fetchUser();
-
-    // Check for auth callback status in URL
-    const params = new URLSearchParams(window.location.search);
-    const authStatus = params.get('auth');
-
-    if (authStatus === 'success') {
-      console.log('[AuthContext] Authentication successful');
-      // Remove the query parameter and reload user
-      window.history.replaceState({}, '', window.location.pathname);
-      fetchUser();
-    } else if (authStatus === 'error') {
-      setError('認証中にエラーが発生しました。もう一度お試しください。');
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (authStatus === 'cancelled') {
-      setError('認証がキャンセルされました。');
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (authStatus === 'config_error') {
-      setError('サーバーの設定エラーです。管理者に連絡してください。');
-      window.history.replaceState({}, '', window.location.pathname);
-    }
+    checkRedirectResult();
   }, []);
 
+  // Monitor auth state changes
+  useEffect(() => {
+    console.log('[AuthContext] Setting up auth state listener...');
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('[AuthContext] Auth state changed:', firebaseUser?.email || 'null');
+
+      if (firebaseUser) {
+        const user = await convertFirebaseUser(firebaseUser);
+        setCurrentUser(user);
+        await updateIdToken(firebaseUser);
+      } else {
+        setCurrentUser(null);
+        setIdToken(null);
+      }
+
+      setLoading(false);
+    });
+
+    return () => {
+      console.log('[AuthContext] Cleaning up auth state listener');
+      unsubscribe();
+    };
+  }, []);
+
+  // Refresh token periodically (every 50 minutes)
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    const refreshInterval = setInterval(async () => {
+      console.log('[AuthContext] Refreshing ID token...');
+      await updateIdToken(auth.currentUser);
+    }, 50 * 60 * 1000); // 50 minutes
+
+    return () => clearInterval(refreshInterval);
+  }, [currentUser]);
+
   const signInWithGoogle = () => {
-    console.log('[AuthContext] Redirecting to Google OAuth...');
-    console.log('[AuthContext] Target URL: /auth/google');
+    console.log('[AuthContext] Starting Google sign-in with redirect...');
     setLoadingGoogleSignIn(true);
     setError(null);
 
-    // Simple redirect to server-side OAuth endpoint
-    // No Firebase SDK, no popup/redirect complexity!
-
-    // Add a small delay to ensure state is updated
-    setTimeout(() => {
-      console.log('[AuthContext] Executing redirect now...');
-      window.location.href = '/auth/google';
-    }, 100);
+    try {
+      // Use signInWithRedirect for better mobile support
+      signInWithRedirect(auth, googleProvider);
+    } catch (error: any) {
+      console.error('[AuthContext] Error initiating sign-in:', error);
+      setError('ログインの開始に失敗しました。もう一度お試しください。');
+      setLoadingGoogleSignIn(false);
+    }
   };
 
   const logout = async () => {
     console.log('[AuthContext] Logging out...');
     try {
-      const response = await fetch('/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        setCurrentUser(null);
-        console.log('[AuthContext] Logout successful');
-      } else {
-        throw new Error('Logout failed');
-      }
+      await firebaseSignOut(auth);
+      setCurrentUser(null);
+      setIdToken(null);
+      console.log('[AuthContext] Logout successful');
     } catch (error) {
       console.error('[AuthContext] Logout error:', error);
       setError('ログアウト中にエラーが発生しました。');
@@ -109,6 +155,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signInWithGoogle,
     loadingGoogleSignIn,
     error,
+    idToken,
   };
 
   return (

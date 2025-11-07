@@ -2,7 +2,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import admin from 'firebase-admin';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import session from 'express-session';
 
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -10,7 +9,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import uploadRoutes from './routes/upload.js';
 import itemRoutes from './routes/items.js';
-import authRoutes from './routes/auth.js';
 import { authMiddleware } from './middleware/auth.js';
 
 // Only load .env files in development
@@ -21,47 +19,7 @@ if (process.env.NODE_ENV !== 'production') {
   console.log('[App] Loaded environment variables from', envFile);
 } else {
   console.log('[App] Running in production - using platform-provided environment variables');
-
-  // DIAGNOSTIC: Log all environment variable keys (not values!) to debug injection
-  const allEnvKeys = Object.keys(process.env);
-  console.log('[App] DIAGNOSTIC - Total environment variables:', allEnvKeys.length);
-  console.log('[App] DIAGNOSTIC - Environment variable keys:', allEnvKeys.filter(key =>
-    // Only log app-specific keys, not all system keys
-    key.includes('GOOGLE') ||
-    key.includes('SESSION') ||
-    key.includes('FIREBASE') ||
-    key.includes('ALLOWED') ||
-    key.includes('NODE_ENV')
-  ));
-
-  // DIAGNOSTIC: Check if variables exist but are empty
-  console.log('[App] DIAGNOSTIC - Variable details:', {
-    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID === undefined ? 'UNDEFINED' :
-                      process.env.GOOGLE_CLIENT_ID === '' ? 'EMPTY_STRING' :
-                      `EXISTS (length: ${process.env.GOOGLE_CLIENT_ID.length})`,
-    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET === undefined ? 'UNDEFINED' :
-                          process.env.GOOGLE_CLIENT_SECRET === '' ? 'EMPTY_STRING' :
-                          `EXISTS (length: ${process.env.GOOGLE_CLIENT_SECRET.length})`,
-    SESSION_SECRET: process.env.SESSION_SECRET === undefined ? 'UNDEFINED' :
-                    process.env.SESSION_SECRET === '' ? 'EMPTY_STRING' :
-                    `EXISTS (length: ${process.env.SESSION_SECRET.length})`,
-    GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI === undefined ? 'UNDEFINED' :
-                         process.env.GOOGLE_REDIRECT_URI === '' ? 'EMPTY_STRING' :
-                         `EXISTS (length: ${process.env.GOOGLE_REDIRECT_URI.length})`,
-    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS === undefined ? 'UNDEFINED' :
-                     process.env.ALLOWED_ORIGINS === '' ? 'EMPTY_STRING' :
-                     `EXISTS (length: ${process.env.ALLOWED_ORIGINS.length})`,
-  });
 }
-
-// Log OAuth configuration status (without exposing secrets)
-console.log('[App] OAuth Configuration Check:', {
-  NODE_ENV: process.env.NODE_ENV,
-  hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
-  hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-  hasSessionSecret: !!process.env.SESSION_SECRET,
-  googleRedirectUri: process.env.GOOGLE_REDIRECT_URI || 'not set (will use default)',
-});
 
 // --- Firebase 初期化 ---
 if (admin.apps.length === 0) {
@@ -134,19 +92,6 @@ app.use(
 app.use(morgan('combined'));
 app.use(express.json());
 
-// --- Session Configuration ---
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-change-this-in-production',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    sameSite: 'lax',
-  },
-}));
-
 const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
 console.log('CORS allowed origins:', allowed.length > 0 ? allowed : 'all origins (no restriction)');
 
@@ -181,9 +126,6 @@ app.use(express.static(path.join(__dirname, "client"), {
 }));
 
 // --- ルーティング ---
-// Authentication routes (must come before other protected routes)
-app.use('/auth', authRoutes);
-
 // Upload always requires authentication
 app.use('/upload', authMiddleware, uploadRoutes);
 // Items routes handle authentication per-route (GET is public, POST/PUT/DELETE require auth)
