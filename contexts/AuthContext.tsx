@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import {
   signInWithRedirect,
+  signInWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   getRedirectResult,
@@ -129,38 +130,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => clearInterval(refreshInterval);
   }, [currentUser]);
 
-  const signInWithGoogle = () => {
-    console.log('[AuthContext] Starting Google sign-in with redirect...');
+  const signInWithGoogle = async () => {
+    console.log('[AuthContext] Starting Google sign-in...');
     console.log('[AuthContext] Auth object:', auth);
     console.log('[AuthContext] Google provider:', googleProvider);
     setLoadingGoogleSignIn(true);
     setError(null);
 
     try {
-      // Use signInWithRedirect for better mobile support
-      console.log('[AuthContext] Calling signInWithRedirect...');
-      const redirectPromise = signInWithRedirect(auth, googleProvider);
-      console.log('[AuthContext] signInWithRedirect called, promise:', redirectPromise);
+      // Try popup first (works more reliably in some environments)
+      console.log('[AuthContext] Attempting signInWithPopup...');
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('[AuthContext] ✅ Popup sign-in successful:', result.user.email);
 
-      // signInWithRedirect returns a Promise that resolves immediately
-      // The actual redirect happens after the promise resolves
-      redirectPromise
-        .then(() => {
-          console.log('[AuthContext] ✅ Redirect initiated successfully');
-        })
-        .catch((error) => {
-          console.error('[AuthContext] ❌ signInWithRedirect failed:', error);
-          console.error('[AuthContext] Error code:', error.code);
-          console.error('[AuthContext] Error message:', error.message);
-          setError(`ログインの開始に失敗しました: ${error.message}`);
-          setLoadingGoogleSignIn(false);
-        });
+      const user = await convertFirebaseUser(result.user);
+      setCurrentUser(user);
+      await updateIdToken(result.user);
+      setLoadingGoogleSignIn(false);
     } catch (error: any) {
-      console.error('[AuthContext] ❌ Error initiating sign-in:', error);
+      console.error('[AuthContext] ❌ Popup sign-in failed:', error);
       console.error('[AuthContext] Error code:', error.code);
       console.error('[AuthContext] Error message:', error.message);
-      setError('ログインの開始に失敗しました。もう一度お試しください。');
-      setLoadingGoogleSignIn(false);
+
+      // If popup is blocked or fails, try redirect as fallback
+      if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+        console.log('[AuthContext] Popup blocked, trying redirect instead...');
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          console.log('[AuthContext] ✅ Redirect initiated');
+        } catch (redirectError: any) {
+          console.error('[AuthContext] ❌ Redirect also failed:', redirectError);
+          setError(`ログインに失敗しました: ${redirectError.message}`);
+          setLoadingGoogleSignIn(false);
+        }
+      } else {
+        setError(`ログインに失敗しました: ${error.message}`);
+        setLoadingGoogleSignIn(false);
+      }
     }
   };
 
