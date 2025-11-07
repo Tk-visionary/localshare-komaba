@@ -131,59 +131,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [currentUser]);
 
   const signInWithGoogle = async () => {
-    console.log('[AuthContext] Starting Google sign-in...');
+    console.log('[AuthContext] Starting Google sign-in with popup...');
     setLoadingGoogleSignIn(true);
     setError(null);
 
-    // Detect if user is on mobile device
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    console.log('[AuthContext] Device type:', isMobile ? 'Mobile' : 'Desktop');
+    try {
+      // Try popup first (works on all devices with COOP header fix)
+      console.log('[AuthContext] Attempting signInWithPopup...');
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('[AuthContext] ✅ Popup sign-in successful:', result.user.email);
 
-    if (isMobile) {
-      // On mobile, use redirect directly (popup doesn't work well on mobile)
-      console.log('[AuthContext] Using signInWithRedirect for mobile...');
-      try {
-        await signInWithRedirect(auth, googleProvider);
-        console.log('[AuthContext] ✅ Redirect initiated');
-        // Note: The page will redirect, so this code won't continue
-      } catch (error: any) {
-        console.error('[AuthContext] ❌ Redirect failed:', error);
-        console.error('[AuthContext] Error code:', error.code);
-        console.error('[AuthContext] Error message:', error.message);
-        setError(`ログインに失敗しました: ${error.message}`);
-        setLoadingGoogleSignIn(false);
-      }
-    } else {
-      // On desktop, use popup (better UX, no page reload)
-      console.log('[AuthContext] Using signInWithPopup for desktop...');
-      try {
-        const result = await signInWithPopup(auth, googleProvider);
-        console.log('[AuthContext] ✅ Popup sign-in successful:', result.user.email);
+      const user = await convertFirebaseUser(result.user);
+      setCurrentUser(user);
+      await updateIdToken(result.user);
+      setLoadingGoogleSignIn(false);
+    } catch (error: any) {
+      console.error('[AuthContext] ❌ Popup sign-in failed:', error);
+      console.error('[AuthContext] Error code:', error.code);
+      console.error('[AuthContext] Error message:', error.message);
 
-        const user = await convertFirebaseUser(result.user);
-        setCurrentUser(user);
-        await updateIdToken(result.user);
-        setLoadingGoogleSignIn(false);
-      } catch (error: any) {
-        console.error('[AuthContext] ❌ Popup sign-in failed:', error);
-        console.error('[AuthContext] Error code:', error.code);
-        console.error('[AuthContext] Error message:', error.message);
-
-        // If popup is blocked, try redirect as fallback
-        if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-          console.log('[AuthContext] Popup blocked, trying redirect instead...');
-          try {
-            await signInWithRedirect(auth, googleProvider);
-            console.log('[AuthContext] ✅ Redirect initiated');
-          } catch (redirectError: any) {
-            console.error('[AuthContext] ❌ Redirect also failed:', redirectError);
-            setError(`ログインに失敗しました: ${redirectError.message}`);
-            setLoadingGoogleSignIn(false);
-          }
-        } else {
-          setError(`ログインに失敗しました: ${error.message}`);
+      // If popup is blocked or fails, try redirect as fallback
+      if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+        console.log('[AuthContext] Popup blocked, trying redirect instead...');
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          console.log('[AuthContext] ✅ Redirect initiated');
+        } catch (redirectError: any) {
+          console.error('[AuthContext] ❌ Redirect also failed:', redirectError);
+          setError(`ログインに失敗しました: ${redirectError.message}`);
           setLoadingGoogleSignIn(false);
         }
+      } else {
+        setError(`ログインに失敗しました: ${error.message}`);
+        setLoadingGoogleSignIn(false);
       }
     }
   };
