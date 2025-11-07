@@ -6,7 +6,7 @@ import { Request, Response, NextFunction } from 'express';
 
 // Mock the auth middleware to bypass actual authentication
 jest.mock('../middleware/auth.js', () => ({
-  firebaseAuthMiddleware: (req: Request, res: Response, next: NextFunction) => {
+  authMiddleware: (req: Request, res: Response, next: NextFunction) => {
     req.user = { uid: 'test-user-id', email: 'test@example.com' };
     next();
   },
