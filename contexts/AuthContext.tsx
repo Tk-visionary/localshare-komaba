@@ -131,14 +131,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [currentUser]);
 
   const signInWithGoogle = async () => {
-    console.log('[AuthContext] Starting Google sign-in...');
-    console.log('[AuthContext] Auth object:', auth);
-    console.log('[AuthContext] Google provider:', googleProvider);
+    console.log('[AuthContext] Starting Google sign-in with popup...');
     setLoadingGoogleSignIn(true);
     setError(null);
 
     try {
-      // Try popup first (works more reliably in some environments)
+      // Try popup first (works on all devices with COOP header fix)
       console.log('[AuthContext] Attempting signInWithPopup...');
       const result = await signInWithPopup(auth, googleProvider);
       console.log('[AuthContext] ✅ Popup sign-in successful:', result.user.email);
