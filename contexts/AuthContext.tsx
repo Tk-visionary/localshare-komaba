@@ -131,14 +131,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signInWithGoogle = () => {
     console.log('[AuthContext] Starting Google sign-in with redirect...');
+    console.log('[AuthContext] Auth object:', auth);
+    console.log('[AuthContext] Google provider:', googleProvider);
     setLoadingGoogleSignIn(true);
     setError(null);
 
     try {
       // Use signInWithRedirect for better mobile support
-      signInWithRedirect(auth, googleProvider);
+      console.log('[AuthContext] Calling signInWithRedirect...');
+      const redirectPromise = signInWithRedirect(auth, googleProvider);
+      console.log('[AuthContext] signInWithRedirect called, promise:', redirectPromise);
+
+      // signInWithRedirect returns a Promise that resolves immediately
+      // The actual redirect happens after the promise resolves
+      redirectPromise
+        .then(() => {
+          console.log('[AuthContext] ✅ Redirect initiated successfully');
+        })
+        .catch((error) => {
+          console.error('[AuthContext] ❌ signInWithRedirect failed:', error);
+          console.error('[AuthContext] Error code:', error.code);
+          console.error('[AuthContext] Error message:', error.message);
+          setError(`ログインの開始に失敗しました: ${error.message}`);
+          setLoadingGoogleSignIn(false);
+        });
     } catch (error: any) {
-      console.error('[AuthContext] Error initiating sign-in:', error);
+      console.error('[AuthContext] ❌ Error initiating sign-in:', error);
+      console.error('[AuthContext] Error code:', error.code);
+      console.error('[AuthContext] Error message:', error.message);
       setError('ログインの開始に失敗しました。もう一度お試しください。');
       setLoadingGoogleSignIn(false);
     }
