@@ -59,17 +59,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const checkRedirectResult = async () => {
       try {
         console.log('[AuthContext] Checking redirect result...');
+        console.log('[AuthContext] Current URL:', window.location.href);
+        console.log('[AuthContext] Current auth state:', auth.currentUser?.email || 'null');
+
         const result = await getRedirectResult(auth);
 
+        console.log('[AuthContext] getRedirectResult returned:', result);
+
         if (result) {
-          console.log('[AuthContext] Redirect result found:', result.user.email);
+          console.log('[AuthContext] ✅ Redirect result found:', result.user.email);
           const user = await convertFirebaseUser(result.user);
           setCurrentUser(user);
           await updateIdToken(result.user);
           setError(null);
+        } else {
+          console.log('[AuthContext] ℹ️ No redirect result (user may not have logged in yet)');
         }
       } catch (error: any) {
-        console.error('[AuthContext] Error handling redirect result:', error);
+        console.error('[AuthContext] ❌ Error handling redirect result:', error);
+        console.error('[AuthContext] Error code:', error.code);
+        console.error('[AuthContext] Error message:', error.message);
         if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
           setError('認証がキャンセルされました。');
         } else {
