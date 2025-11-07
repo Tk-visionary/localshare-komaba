@@ -5,8 +5,12 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 // These are injected by Vite at build time (see vite.config.ts)
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  // Use custom domain for better UX (users see familiar domain during auth)
-  authDomain: 'komabasai.local-share.net',
+  // Using custom subdomain as authDomain
+  // Requires:
+  // 1. Set up 'auth.komabasai.local-share.net' in Firebase Hosting
+  // 2. Add to Firebase Authentication authorized domains
+  // 3. Add https://auth.komabasai.local-share.net/__/auth/handler to OAuth redirect URIs
+  authDomain: 'auth.komabasai.local-share.net',
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
