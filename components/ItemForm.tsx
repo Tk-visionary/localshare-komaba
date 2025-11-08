@@ -81,10 +81,23 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
       </div>
 
       <div>
-        <label htmlFor="category" className="block text-sm font-medium text-gray-700">カテゴリ</label>
-        <select name="category" id="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ut-blue focus:border-ut-blue sm:text-sm">
-          {Object.values(ItemCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
-        </select>
+        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">カテゴリ</label>
+        <div className="relative">
+          <select
+            name="category"
+            id="category"
+            value={formData.category}
+            onChange={handleChange}
+            className="mt-1 block w-full border-2 border-gray-200 rounded-lg shadow-sm py-3 px-4 pr-10 bg-white hover:border-komaba-orange/50 focus:outline-none focus:ring-2 focus:ring-komaba-orange focus:border-komaba-orange transition-all duration-200 appearance-none cursor-pointer text-gray-900 font-medium"
+          >
+            {Object.values(ItemCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+          </select>
+          <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       <div>
@@ -102,10 +115,23 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
         <legend className="text-sm font-medium text-gray-700 px-2">出店場所</legend>
         <div className="space-y-4">
           <div>
-            <label htmlFor="boothArea" className="block text-sm font-medium text-gray-700">エリア</label>
-            <select name="boothArea" id="boothArea" value={formData.boothArea} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ut-blue focus:border-ut-blue sm:text-sm">
-              {Object.values(BoothArea).map(area => <option key={area} value={area}>{area}</option>)}
-            </select>
+            <label htmlFor="boothArea" className="block text-sm font-medium text-gray-700 mb-2">エリア</label>
+            <div className="relative">
+              <select
+                name="boothArea"
+                id="boothArea"
+                value={formData.boothArea}
+                onChange={handleChange}
+                className="mt-1 block w-full border-2 border-gray-200 rounded-lg shadow-sm py-3 px-4 pr-10 bg-white hover:border-komaba-orange/50 focus:outline-none focus:ring-2 focus:ring-komaba-orange focus:border-komaba-orange transition-all duration-200 appearance-none cursor-pointer text-gray-900 font-medium"
+              >
+                {Object.values(BoothArea).map(area => <option key={area} value={area}>{area}</option>)}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
           <div>
             <label htmlFor="boothDetail" className="block text-sm font-medium text-gray-700">詳細（教室名、テント番号など）</label>
