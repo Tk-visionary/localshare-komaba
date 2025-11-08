@@ -46,9 +46,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* 背景オーバーレイ */}
+      {/* 背景オーバーレイ（透明・クリックで閉じる用） */}
       <div
-        className="absolute inset-0 bg-gray-900 bg-opacity-30 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0"
         onClick={onCancel}
       />
 
