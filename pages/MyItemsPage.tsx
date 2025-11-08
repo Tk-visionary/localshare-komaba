@@ -8,6 +8,7 @@ import { ITEM_STATUS } from '../constants';
 import { Item } from '../types';
 import ItemCard from '../components/ItemCard';
 import ItemDetailModal from '../components/ItemDetailModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 interface MyItemsPageProps {}
 
@@ -17,6 +18,8 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const { data: myItems = [], isLoading, isError, error } = useQuery<Item[], Error>({
     queryKey: ['items', currentUser?.id],
@@ -52,9 +55,21 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('この商品を本当に削除しますか？')) {
-      deleteItemMutation.mutate(id);
+    setItemToDelete(id);
+    setIsConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      deleteItemMutation.mutate(itemToDelete);
     }
+    setIsConfirmOpen(false);
+    setItemToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setIsConfirmOpen(false);
+    setItemToDelete(null);
   };
 
   const handleEdit = (id: string) => {
@@ -107,6 +122,18 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
         item={selectedItem}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        title="商品を削除"
+        message="この商品を本当に削除しますか？"
+        warningMessage="この操作は取り消すことができません。"
+        confirmText="削除する"
+        cancelText="キャンセル"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        isDangerous={true}
       />
     </div>
   );
