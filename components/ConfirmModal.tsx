@@ -48,7 +48,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* 背景オーバーレイ */}
       <div
-        className="absolute inset-0 bg-black bg-opacity-15"
+        className="absolute inset-0 backdrop-blur-sm"
         onClick={onCancel}
       />
 
