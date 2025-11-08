@@ -36,7 +36,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
   const areaOptions = [
     { value: BoothArea.MAIN_GATE, label: '正門・時計台エリア', icon: '🏛️' },
     { value: BoothArea.GINKGO_AVENUE, label: 'いちょう並木エリア', icon: '🍂' },
-    { value: BoothArea.KOMABA_HALL, label: '900番講堂エリア', icon: '🎭' },
+    { value: BoothArea.KOMABA_HALL, label: '900番講堂エリア', icon: '🎤' },
     { value: BoothArea.CP_PLAZA, label: 'コミュニケーション・プラザエリア', icon: '💬' },
     { value: BoothArea.BUILDING_1, label: '1号館エリア', icon: '🏢' },
     { value: BoothArea.BUILDING_7, label: '7号館エリア', icon: '🏢' },
