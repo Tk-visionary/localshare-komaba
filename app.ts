@@ -2,7 +2,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import admin from 'firebase-admin';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createProxyMiddleware } from 'http-proxy-middleware';
 
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -127,14 +126,6 @@ app.use(express.static(path.join(__dirname, "client"), {
       res.setHeader('Expires', '0');
     }
   }
-}));
-
-// --- Firebase Auth Proxy ---
-// Proxy /__/* requests to Firebase's default domain
-// This allows using custom domain as authDomain while Firebase handles auth endpoints
-app.use('/__', createProxyMiddleware({
-  target: 'https://localshare-komaba-54c0d.firebaseapp.com',
-  changeOrigin: true,
 }));
 
 // --- ルーティング ---
