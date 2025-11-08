@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -7,6 +7,7 @@ import * as api from '../services/itemApi';
 import { ITEM_STATUS } from '../constants';
 import { Item } from '../types';
 import ItemCard from '../components/ItemCard';
+import ItemDetailModal from '../components/ItemDetailModal';
 
 interface MyItemsPageProps {}
 
@@ -14,6 +15,8 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
   const { currentUser } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: myItems = [], isLoading, isError, error } = useQuery<Item[], Error>({
     queryKey: ['items', currentUser?.id],
@@ -58,6 +61,16 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
     navigate(`/edit-item/${id}`);
   };
 
+  const handleItemClick = (item: Item) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
+
   if (isLoading) return <div className="flex justify-center items-center h-64"><div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-komaba-orange"></div></div>;
   if (isError) return <div className="text-center text-red-500 mt-8">商品の読み込みに失敗しました: {error.message}</div>;
 
@@ -67,12 +80,13 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
       {myItems.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {myItems.map(item => (
-            <ItemCard 
-              key={item.id} 
+            <ItemCard
+              key={item.id}
               item={item}
               onToggleSoldOut={handleToggleSoldOut}
               onDelete={handleDelete}
               onEdit={handleEdit}
+              onClick={handleItemClick}
             />
           ))}
         </div>
@@ -88,6 +102,12 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
           </button>
         </div>
       )}
+
+      <ItemDetailModal
+        item={selectedItem}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };
