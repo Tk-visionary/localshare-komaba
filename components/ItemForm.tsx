@@ -81,14 +81,14 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
       </div>
 
       <div>
-        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">カテゴリ</label>
+        <label htmlFor="category" className="block text-sm font-medium text-gray-700">カテゴリ</label>
         <div className="relative">
           <select
             name="category"
             id="category"
             value={formData.category}
             onChange={handleChange}
-            className="mt-1 block w-full border-2 border-gray-200 rounded-lg shadow-sm py-3 px-4 pr-10 bg-white hover:border-komaba-orange/50 focus:outline-none focus:ring-2 focus:ring-komaba-orange focus:border-komaba-orange transition-all duration-200 appearance-none cursor-pointer text-gray-900 font-medium"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 pr-10 bg-white hover:border-komaba-orange/50 focus:outline-none focus:border-komaba-orange transition-all duration-200 appearance-none cursor-pointer sm:text-sm"
           >
             {Object.values(ItemCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
           </select>
@@ -115,14 +115,14 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
         <legend className="text-sm font-medium text-gray-700 px-2">出店場所</legend>
         <div className="space-y-4">
           <div>
-            <label htmlFor="boothArea" className="block text-sm font-medium text-gray-700 mb-2">エリア</label>
+            <label htmlFor="boothArea" className="block text-sm font-medium text-gray-700">エリア</label>
             <div className="relative">
               <select
                 name="boothArea"
                 id="boothArea"
                 value={formData.boothArea}
                 onChange={handleChange}
-                className="mt-1 block w-full border-2 border-gray-200 rounded-lg shadow-sm py-3 px-4 pr-10 bg-white hover:border-komaba-orange/50 focus:outline-none focus:ring-2 focus:ring-komaba-orange focus:border-komaba-orange transition-all duration-200 appearance-none cursor-pointer text-gray-900 font-medium"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 pr-10 bg-white hover:border-komaba-orange/50 focus:outline-none focus:border-komaba-orange transition-all duration-200 appearance-none cursor-pointer sm:text-sm"
               >
                 {Object.values(BoothArea).map(area => <option key={area} value={area}>{area}</option>)}
               </select>
