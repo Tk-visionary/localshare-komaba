@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 import { Item, ItemCategory, BoothArea } from '../types';
+import CustomSelect from './CustomSelect';
 
 type ItemFormData = Omit<Item, 'id' | 'postedAt' | 'userId' | 'imageUrl' | 'isSoldOut' | 'user'>;
 
@@ -23,6 +24,28 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // カテゴリのオプション（アイコン付き）
+  const categoryOptions = [
+    { value: ItemCategory.FOOD, label: '飲食物', icon: '🍴' },
+    { value: ItemCategory.GOODS, label: '物品', icon: '📦' },
+    { value: ItemCategory.OTHER, label: 'その他', icon: '⭐' },
+  ];
+
+  // エリアのオプション（アイコン付き）
+  const areaOptions = [
+    { value: BoothArea.MAIN_GATE, label: '正門・時計台エリア', icon: '🏛️' },
+    { value: BoothArea.GINKGO_AVENUE, label: 'いちょう並木エリア', icon: '🍂' },
+    { value: BoothArea.KOMABA_HALL, label: '900番講堂エリア', icon: '🎭' },
+    { value: BoothArea.CP_PLAZA, label: 'コミュニケーション・プラザエリア', icon: '💬' },
+    { value: BoothArea.BUILDING_1, label: '1号館エリア', icon: '🏢' },
+    { value: BoothArea.BUILDING_7, label: '7号館エリア', icon: '🏢' },
+    { value: BoothArea.BUILDING_10, label: '10号館エリア', icon: '🏢' },
+    { value: BoothArea.BUILDING_11, label: '11号館エリア', icon: '🏢' },
+    { value: BoothArea.BUILDING_13, label: '13号館エリア', icon: '🏢' },
+    { value: BoothArea.GROUND, label: 'グラウンドエリア', icon: '⚽' },
+    { value: BoothArea.OTHER, label: 'その他', icon: '📍' },
+  ];
 
   useEffect(() => {
     if (existingItem) {
@@ -82,22 +105,14 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
 
       <div>
         <label htmlFor="category" className="block text-sm font-medium text-gray-700">カテゴリ</label>
-        <div className="relative">
-          <select
-            name="category"
-            id="category"
-            value={formData.category}
-            onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 pr-10 bg-white hover:border-komaba-orange/50 focus:outline-none focus:border-komaba-orange transition-all duration-200 appearance-none cursor-pointer sm:text-sm"
-          >
-            {Object.values(ItemCategory).map(cat => <option key={cat} value={cat}>{cat}</option>)}
-          </select>
-          <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
+        <CustomSelect
+          id="category"
+          name="category"
+          value={formData.category}
+          onChange={handleChange}
+          options={categoryOptions}
+          required
+        />
       </div>
 
       <div>
@@ -116,22 +131,14 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
         <div className="space-y-4">
           <div>
             <label htmlFor="boothArea" className="block text-sm font-medium text-gray-700">エリア</label>
-            <div className="relative">
-              <select
-                name="boothArea"
-                id="boothArea"
-                value={formData.boothArea}
-                onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 pr-10 bg-white hover:border-komaba-orange/50 focus:outline-none focus:border-komaba-orange transition-all duration-200 appearance-none cursor-pointer sm:text-sm"
-              >
-                {Object.values(BoothArea).map(area => <option key={area} value={area}>{area}</option>)}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
+            <CustomSelect
+              id="boothArea"
+              name="boothArea"
+              value={formData.boothArea}
+              onChange={handleChange}
+              options={areaOptions}
+              required
+            />
           </div>
           <div>
             <label htmlFor="boothDetail" className="block text-sm font-medium text-gray-700">詳細（教室名、テント番号など）</label>
