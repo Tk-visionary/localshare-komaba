@@ -135,14 +135,13 @@ app.use(express.static(path.join(__dirname, "client"), {
 app.use('/__', createProxyMiddleware({
   target: 'https://localshare-komaba-54c0d.firebaseapp.com',
   changeOrigin: true,
-  logLevel: 'debug',
-  onProxyReq: (proxyReq, req, res) => {
+  onProxyReq: (proxyReq: any, req: any, res: any) => {
     console.log('[Proxy] Forwarding request:', req.method, req.path, '→', proxyReq.path);
   },
-  onProxyRes: (proxyRes, req, res) => {
+  onProxyRes: (proxyRes: any, req: any, res: any) => {
     console.log('[Proxy] Response received:', proxyRes.statusCode, req.path);
   },
-  onError: (err, req, res) => {
+  onError: (err: any, req: any, res: any) => {
     console.error('[Proxy] Error:', err.message, 'for', req.path);
   }
 }));
