@@ -3,12 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import * as api from '../services/itemApi';
 import { Item, ItemCategory } from '../types';
 import ItemCard from '../components/ItemCard';
+import ItemDetailModal from '../components/ItemDetailModal';
 
 const HomePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [priceFilter, setPriceFilter] = useState<string>('all');
   const [availabilityFilter, setAvailabilityFilter] = useState<string>('all');
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: items = [], isLoading, isError, error } = useQuery<Item[], Error>({
     queryKey: ['items'],
@@ -46,6 +49,16 @@ const HomePage: React.FC = () => {
     { value: 'available', label: '在庫あり' },
     { value: 'soldOut', label: '売り切れ' },
   ];
+
+  const handleItemClick = (item: Item) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-komaba-orange"></div></div>;
   if (isError) return <div className="text-center text-red-500 mt-8">商品の読み込みに失敗しました: {error.message}</div>;
@@ -128,13 +141,19 @@ const HomePage: React.FC = () => {
 
       {filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredItems.map(item => <ItemCard key={item.id} item={item} />)}
+          {filteredItems.map(item => <ItemCard key={item.id} item={item} onClick={handleItemClick} />)}
         </div>
       ) : (
         <div className="text-center text-gray-500 mt-8">
           <p>該当する商品が見つかりません。</p>
         </div>
       )}
+
+      <ItemDetailModal
+        item={selectedItem}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };
