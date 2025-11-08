@@ -10,6 +10,7 @@ const HomePage: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [priceFilter, setPriceFilter] = useState<string>('all');
   const [availabilityFilter, setAvailabilityFilter] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<string>('newest');
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -19,7 +20,7 @@ const HomePage: React.FC = () => {
   });
 
   const filteredItems = useMemo(() => {
-    return items.filter(item => {
+    let result = items.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (item.user && item.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -30,7 +31,23 @@ const HomePage: React.FC = () => {
                                    (availabilityFilter === 'soldOut' && item.isSoldOut);
       return matchesSearch && matchesCategory && matchesPrice && matchesAvailability;
     });
-  }, [items, searchTerm, categoryFilter, priceFilter, availabilityFilter]);
+
+    // ソート処理
+    if (sortOrder === 'price-asc') {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sortOrder === 'price-desc') {
+      result.sort((a, b) => b.price - a.price);
+    } else {
+      // newest - 投稿日時の降順（新しい順）
+      result.sort((a, b) => {
+        const dateA = a.postedAt instanceof Date ? a.postedAt : new Date(a.postedAt);
+        const dateB = b.postedAt instanceof Date ? b.postedAt : new Date(b.postedAt);
+        return dateB.getTime() - dateA.getTime();
+      });
+    }
+
+    return result;
+  }, [items, searchTerm, categoryFilter, priceFilter, availabilityFilter, sortOrder]);
 
   const categoryOptions = [
     { value: 'all', label: 'すべて' },
@@ -48,6 +65,12 @@ const HomePage: React.FC = () => {
     { value: 'all', label: 'すべて' },
     { value: 'available', label: '在庫あり' },
     { value: 'soldOut', label: '売り切れ' },
+  ];
+
+  const sortOptions = [
+    { value: 'newest', label: '新しい順' },
+    { value: 'price-asc', label: '価格の安い順' },
+    { value: 'price-desc', label: '価格の高い順' },
   ];
 
   const handleItemClick = (item: Item) => {
@@ -127,6 +150,25 @@ const HomePage: React.FC = () => {
                   onClick={() => setAvailabilityFilter(value)}
                   className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${
                     availabilityFilter === value
+                      ? 'bg-komaba-orange text-white shadow-md'
+                      : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+             <h3 className="text-sm font-medium text-gray-700">並び替え</h3>
+            <div className="flex flex-wrap gap-2">
+              {sortOptions.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setSortOrder(value)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${
+                    sortOrder === value
                       ? 'bg-komaba-orange text-white shadow-md'
                       : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
                   }`}
