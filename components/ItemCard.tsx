@@ -45,7 +45,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onToggleSoldOut, onDelete, on
               </span>
             </div>
             <p className="text-sm text-gray-600 mt-1 truncate">{item.description}</p>
-            <div className="mt-3 text-xs text-gray-500 space-y-1">
+            <div className="mt-3 text-sm text-gray-500 space-y-1">
               <p><span className="font-semibold">カテゴリ:</span> {item.category}</p>
               <p><span className="font-semibold">場所:</span> {item.boothArea} ({item.boothDetail})</p>
               <p><span className="font-semibold">出店者:</span> {item.exhibitorName}</p>
