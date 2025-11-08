@@ -8,12 +8,24 @@ interface ItemCardProps {
   onToggleSoldOut?: (id: string, isSoldOut: boolean) => void;
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
+  onClick?: (item: Item) => void;
 }
 
-const ItemCard: React.FC<ItemCardProps> = ({ item, onToggleSoldOut, onDelete, onEdit }) => {
+const ItemCard: React.FC<ItemCardProps> = ({ item, onToggleSoldOut, onDelete, onEdit, onClick }) => {
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // ボタンクリック時はモーダルを開かない
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    onClick?.(item);
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out relative">
+    <div
+      className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out relative cursor-pointer"
+      onClick={handleCardClick}
+    >
       {item.isSoldOut && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
           <span className="text-white text-2xl font-bold transform -rotate-12 border-4 border-white px-4 py-2 bg-red-500 shadow-lg">{ITEM_STATUS.SOLD_OUT}</span>
