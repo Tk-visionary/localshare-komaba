@@ -1,42 +1,45 @@
 # AI機能のセットアップガイド
 
-このガイドでは、商品説明の自動生成機能（Gemini API）のセットアップ方法を説明します。
+このガイドでは、商品説明の自動生成機能（Vertex AI）のセットアップ方法を説明します。
 
 ## 機能概要
 
 - **商品説明の自動生成**: 商品名、カテゴリ、価格などから魅力的な説明文を自動生成
-- **使用モデル**: Gemini 2.5 Flash Lite（高速で効率的な軽量モデル）
+- **使用モデル**: Gemini 2.5 Flash Lite（最新の高速・軽量モデル）
+- **認証方式**: Google Cloud のサービスアカウント認証（APIキー不要）
 - **使用回数制限**: ユーザーあたり1日3回まで利用可能
 - **プロンプトチューニング**: 駒場祭の雰囲気に合った文体で生成
 
 ## セットアップ手順
 
-### 1. Gemini API キーの取得
+### 1. Vertex AI APIの有効化
 
-1. [Google AI Studio](https://ai.google.dev/) にアクセス
-2. Googleアカウントでログイン
-3. 「Get API key」をクリック
-4. 新しいAPIキーを作成
+[Vertex AI APIを有効化](https://console.cloud.google.com/apis/library/aiplatform.googleapis.com) ← クリックして「有効にする」
 
-### 2. 環境変数の設定
-
-#### ローカル開発環境
-
-1. `.env` ファイルを作成（`.env.example`を参考に）
-2. 以下の環境変数を追加：
+または gcloud CLI から：
 
 ```bash
-GEMINI_API_KEY=your_actual_api_key_here
+gcloud services enable aiplatform.googleapis.com
 ```
 
-**重要**: `.env` ファイルは `.gitignore` に含まれています。APIキーは絶対にGitにコミットしないでください。
+### 2. サービスアカウントの権限確認
 
-#### 本番環境（Firebase App Hosting / Cloud Run）
+Firebase App Hosting のサービスアカウントに Vertex AI へのアクセス権限が必要です。
 
-1. Firebase Console または Cloud Run のコンソールにアクセス
-2. 環境変数セクションに移動
-3. `GEMINI_API_KEY` という名前で環境変数を追加
-4. 値にAPIキーを設定
+**必要な権限**: `Vertex AI User` （通常は自動的に付与されています）
+
+確認方法：
+1. [IAM & Admin](https://console.cloud.google.com/iam-admin/iam) を開く
+2. `firebase-app-hosting-compute@localshare-komaba-54c0d.iam.gserviceaccount.com` を探す
+3. `Vertex AI User` または `Vertex AI Service Agent` ロールがあることを確認
+
+もし権限がない場合は追加：
+
+```bash
+gcloud projects add-iam-policy-binding localshare-komaba-54c0d \
+  --member="serviceAccount:firebase-app-hosting-compute@localshare-komaba-54c0d.iam.gserviceaccount.com" \
+  --role="roles/aiplatform.user"
+```
 
 ### 3. 依存関係のインストール
 
@@ -44,30 +47,42 @@ GEMINI_API_KEY=your_actual_api_key_here
 npm install
 ```
 
-これにより、`@google/generative-ai` パッケージがインストールされます。
+これにより、`@google-cloud/vertexai` パッケージがインストールされます。
 
 ### 4. 動作確認
 
-1. サーバーを起動：
+#### 本番環境（Firebase App Hosting）
+
+1. コードをプッシュ（自動デプロイが開始）
+2. デプロイ完了後、商品登録ページにアクセス
+3. 商品名とカテゴリを入力
+4. 「✨ AIで生成」ボタンをクリック
+5. 説明文が自動生成されることを確認
+
+#### ローカル開発環境
+
+ローカルでテストする場合、Google Cloud の認証情報が必要です：
+
+```bash
+gcloud auth application-default login
+```
+
+その後、サーバーを起動：
 
 ```bash
 npm run dev
 ```
-
-2. ブラウザで商品登録ページにアクセス
-3. 商品名とカテゴリを入力
-4. 「✨ AIで生成」ボタンをクリック
-5. 説明文が自動生成されることを確認
 
 ## 使用方法
 
 ### フロントエンド（ユーザー視点）
 
 1. 商品登録ページで商品名とカテゴリを入力
-2. 「✨ AIで生成」ボタンをクリック
-3. 生成された説明文が自動で入力される
-4. 必要に応じて編集可能
-5. 1日3回まで利用可能
+2. （推奨）価格や出店団体名も入力すると、より精度の高い説明が生成されます
+3. 「✨ AIで生成」ボタンをクリック
+4. 生成された説明文が自動で入力される
+5. 必要に応じて編集可能
+6. 1日3回まで利用可能
 
 ### API仕様
 
@@ -122,15 +137,27 @@ npm run dev
 
 ## トラブルシューティング
 
-### API
+### 403 Forbidden エラー
 
-キーが設定されていない
+**症状**: 「Method doesn't allow unregistered callers」エラー
 
-**症状**: コンソールに「Warning: GEMINI_API_KEY is not set」と表示
+**原因**:
+1. Vertex AI API が有効化されていない
+2. サービスアカウントに権限がない
 
 **解決方法**:
-1. `.env` ファイルに `GEMINI_API_KEY` が設定されているか確認
-2. サーバーを再起動
+1. [Vertex AI API](https://console.cloud.google.com/apis/library/aiplatform.googleapis.com) を有効化
+2. サービスアカウントに `Vertex AI User` ロールを付与（上記参照）
+3. デプロイを待つ（設定変更後は再デプロイが必要）
+
+### 認証エラー（ローカル開発時）
+
+**症状**: 「Could not load the default credentials」エラー
+
+**解決方法**:
+```bash
+gcloud auth application-default login
+```
 
 ### 429エラー（制限超過）
 
@@ -145,51 +172,70 @@ npm run dev
 **症状**: ボタンを押してから数秒かかる
 
 **解決方法**:
-- これは正常動作です（Gemini APIの応答時間）
+- これは正常動作です（Vertex AI の応答時間: 通常 1-3秒）
 - ローディングスピナーが表示されます
 
 ## コスト管理
 
-### Gemini API の無料枠
+### Vertex AI の料金
 
-- **1日あたり**: 150万トークンまで無料
-- **この実装での使用量**: 約500トークン/回（入力+出力）
-- **想定**: 30ユーザー × 3回/日 = 90回/日 ≈ 45,000トークン/日
-- **結論**: 無料枠内で十分運用可能
+- **gemini-1.5-flash**: 入力 $0.075/100万文字、出力 $0.30/100万文字
+- **この実装での使用量**: 約500文字/回（入力+出力）
+- **想定**: 30ユーザー × 3回/日 = 90回/日 ≈ 45,000文字/日
+- **月間コスト**: 約 $0.50 - $1.00 程度
+
+### 無料枠
+
+Google Cloudの新規アカウントには $300 の無料クレジットが付与されます。
 
 ### 使用量の監視
 
-[Google AI Studio](https://ai.google.dev/) のダッシュボードで使用量を確認できます。
+[Google Cloud Console の請求](https://console.cloud.google.com/billing) で使用量を確認できます。
 
-## セキュリティ注意事項
+## セキュリティ
 
-1. **APIキーの管理**:
-   - `.env` ファイルをGitにコミットしない
-   - APIキーを他人と共有しない
-   - 本番環境では環境変数として安全に管理
+### 認証方式の利点
 
-2. **使用回数制限**:
-   - Firestoreに記録（`ai_usage` コレクション）
-   - ユーザーIDと日付でドキュメント管理
-   - 自動的に日次リセット
+- **APIキー不要**: Secret Manager の設定・管理が不要
+- **IAMで管理**: Google Cloud の標準的な権限管理
+- **漏洩リスクゼロ**: コードにもログにも認証情報が含まれない
 
-3. **認証**:
-   - すべてのAI APIエンドポイントは認証必須
-   - `authMiddleware` で保護
+### 使用回数制限
+
+- Firestoreに記録（`ai_usage` コレクション）
+- ユーザーIDと日付でドキュメント管理
+- 自動的に日次リセット
+
+### 認証
+
+- すべてのAI APIエンドポイントは認証必須
+- `authMiddleware` で保護
 
 ## 実装ファイル
 
-- `services/aiService.ts`: Gemini API呼び出しとプロンプト管理
+- `services/aiService.ts`: Vertex AI呼び出しとプロンプト管理
 - `routes/ai.ts`: APIエンドポイントと使用回数制限
 - `services/itemApi.ts`: フロントエンドAPI呼び出し関数
 - `components/ItemForm.tsx`: UI実装（生成ボタン）
 - `app.ts`: ルート設定
 
+## Vertex AI と Gemini API の比較
+
+| 項目 | Vertex AI | Gemini API |
+|------|-----------|------------|
+| 認証方式 | サービスアカウント | APIキー |
+| セットアップ | 簡単（権限のみ） | やや複雑（APIキー管理） |
+| セキュリティ | 高い | 中程度（キー漏洩リスク） |
+| 本番環境向け | ◎ | △ |
+| 料金 | 従量課金 | 無料枠あり（制限付き） |
+
+**このプロジェクトでは Vertex AI を採用しています。**
+
 ## サポート
 
 問題が発生した場合は、以下を確認してください：
 
-1. コンソールログ（エラーメッセージ）
-2. ネットワークタブ（API呼び出しの確認）
-3. 環境変数の設定
+1. Cloud Logsでエラーメッセージを確認
+2. IAM権限の確認
+3. Vertex AI APIが有効化されているか
 4. Firestore の `ai_usage` コレクション
