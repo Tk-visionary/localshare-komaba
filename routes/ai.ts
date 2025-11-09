@@ -3,7 +3,9 @@ import admin from 'firebase-admin';
 import { generateProductDescription, GenerateDescriptionInput } from '../services/aiService.js';
 
 const router = express.Router();
-const db = admin.firestore();
+
+// Lazy initialization of Firestore to avoid initialization errors
+const getDb = () => admin.firestore();
 
 const MAX_GENERATIONS_PER_DAY = 3;
 
@@ -22,7 +24,7 @@ interface GenerateRequest extends Request {
 // Check and update usage limit
 async function checkUsageLimit(userId: string): Promise<{ allowed: boolean; remaining: number }> {
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  const usageRef = db.collection('ai_usage').doc(`${userId}_${today}`);
+  const usageRef = getDb().collection('ai_usage').doc(`${userId}_${today}`);
 
   const doc = await usageRef.get();
 
@@ -108,7 +110,7 @@ router.get('/usage', async (req: Request, res: Response) => {
 
     const userId = req.user.uid;
     const today = new Date().toISOString().split('T')[0];
-    const usageRef = db.collection('ai_usage').doc(`${userId}_${today}`);
+    const usageRef = getDb().collection('ai_usage').doc(`${userId}_${today}`);
 
     const doc = await usageRef.get();
 
