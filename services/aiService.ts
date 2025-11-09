@@ -1,12 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { VertexAI } from '@google-cloud/vertexai';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+// Initialize Vertex AI
+const projectId = process.env.GOOGLE_CLOUD_PROJECT || 'localshare-komaba-54c0d';
+const location = 'asia-northeast1'; // Tokyo region
 
-if (!GEMINI_API_KEY) {
-  console.warn('[AI Service] Warning: GEMINI_API_KEY is not set');
-}
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const vertexAI = new VertexAI({ project: projectId, location: location });
 
 export interface GenerateDescriptionInput {
   name: string;
@@ -17,13 +15,19 @@ export interface GenerateDescriptionInput {
 
 export async function generateProductDescription(input: GenerateDescriptionInput): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = vertexAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+    });
 
     const prompt = createPrompt(input);
 
     const result = await model.generateContent(prompt);
     const response = result.response;
-    const text = response.text();
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    if (!text) {
+      throw new Error('生成結果が空です');
+    }
 
     return text.trim();
   } catch (error) {
