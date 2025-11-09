@@ -9,6 +9,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import uploadRoutes from './routes/upload.js';
 import itemRoutes from './routes/items.js';
+import aiRoutes from './routes/ai.js';
 import { authMiddleware } from './middleware/auth.js';
 
 // Only load .env files in development
@@ -133,6 +134,8 @@ app.use(express.static(path.join(__dirname, "client"), {
 app.use('/upload', authMiddleware, uploadRoutes);
 // Items routes handle authentication per-route (GET is public, POST/PUT/DELETE require auth)
 app.use('/api/items', itemRoutes);
+// AI routes require authentication
+app.use('/api/ai', authMiddleware, aiRoutes);
 
 // --- SPA fallback ---
 // Only serve index.html for non-file requests (excludes .js, .css, .svg, etc.)

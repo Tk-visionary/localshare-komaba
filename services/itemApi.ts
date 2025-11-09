@@ -67,3 +67,34 @@ export const updateItem = async (itemId: string, itemData: Partial<Item>, imageF
 export const deleteItemById = async (itemId: string): Promise<void> => {
   await fetchJson(`${API_BASE_URL}/items/${itemId}`, { method: 'DELETE' });
 };
+
+// AI Description Generation
+export interface GenerateDescriptionRequest {
+  name: string;
+  category: string;
+  price: number;
+  exhibitorName?: string;
+}
+
+export interface GenerateDescriptionResponse {
+  description: string;
+  remaining: number;
+}
+
+export const generateDescription = async (data: GenerateDescriptionRequest): Promise<GenerateDescriptionResponse> => {
+  return fetchJson(`${API_BASE_URL}/ai/generate-description`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+export interface AIUsageResponse {
+  remaining: number;
+  used: number;
+  limit: number;
+}
+
+export const getAIUsage = async (): Promise<AIUsageResponse> => {
+  return fetchJson(`${API_BASE_URL}/ai/usage`);
+};
