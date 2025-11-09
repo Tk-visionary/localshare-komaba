@@ -26,10 +26,6 @@ runConfig:
       availability:
         - BUILD
         - RUNTIME
-    - variable: GEMINI_API_KEY
-      secret: GEMINI_API_KEY
-      availability:
-        - RUNTIME
 
 # Defines the settings for your app's build process.
 buildConfig:
