@@ -70,11 +70,11 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
         </div>
 
         {/* 商品詳細 */}
-        <div className="p-8">
+        <div className="p-6 md:p-8">
           {/* 商品名と価格 */}
-          <div className="flex justify-between items-start mb-4">
-            <h2 className="text-3xl font-bold text-gray-800">{item.name}</h2>
-            <span className={`text-3xl font-bold ${item.price === 0 ? 'text-komaba-teal' : 'text-komaba-orange'}`}>
+          <div className="flex justify-between items-start mb-4 gap-4">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800">{item.name}</h2>
+            <span className={`text-xl md:text-2xl lg:text-3xl font-bold flex-shrink-0 ${item.price === 0 ? 'text-komaba-teal' : 'text-komaba-orange'}`}>
               {item.price === 0 ? '無料' : `¥${item.price}`}
             </span>
           </div>
@@ -82,32 +82,32 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
           {/* 商品説明 */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">商品説明</h3>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{item.description}</p>
+            <p className="text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">{item.description}</p>
           </div>
 
           {/* 詳細情報 */}
-          <div className="space-y-4 mb-6">
+          <div className="space-y-3 md:space-y-4 mb-6">
             <div className="flex items-start">
-              <span className="text-sm font-semibold text-gray-700 w-24 flex-shrink-0">カテゴリ:</span>
-              <span className="text-sm text-gray-600">{item.category}</span>
+              <span className="text-xs md:text-sm font-semibold text-gray-700 w-20 md:w-24 flex-shrink-0">カテゴリ:</span>
+              <span className="text-xs md:text-sm text-gray-600">{item.category}</span>
             </div>
 
             <div className="flex items-start">
-              <span className="text-sm font-semibold text-gray-700 w-24 flex-shrink-0">場所:</span>
-              <div className="text-sm text-gray-600">
+              <span className="text-xs md:text-sm font-semibold text-gray-700 w-20 md:w-24 flex-shrink-0">場所:</span>
+              <div className="text-xs md:text-sm text-gray-600">
                 <p>{item.boothArea}</p>
                 <p className="text-gray-500">{item.boothDetail}</p>
               </div>
             </div>
 
             <div className="flex items-start">
-              <span className="text-sm font-semibold text-gray-700 w-24 flex-shrink-0">出店者:</span>
-              <span className="text-sm text-gray-600">{item.exhibitorName}</span>
+              <span className="text-xs md:text-sm font-semibold text-gray-700 w-20 md:w-24 flex-shrink-0">出店者:</span>
+              <span className="text-xs md:text-sm text-gray-600">{item.exhibitorName}</span>
             </div>
 
             <div className="flex items-start">
-              <span className="text-sm font-semibold text-gray-700 w-24 flex-shrink-0">投稿日時:</span>
-              <span className="text-sm text-gray-500">{timeSince(item.postedAt)}</span>
+              <span className="text-xs md:text-sm font-semibold text-gray-700 w-20 md:w-24 flex-shrink-0">投稿日時:</span>
+              <span className="text-xs md:text-sm text-gray-500">{timeSince(item.postedAt)}</span>
             </div>
           </div>
 
