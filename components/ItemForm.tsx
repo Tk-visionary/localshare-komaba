@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-
+import toast from 'react-hot-toast';
 import { Item, ItemCategory, BoothArea } from '../types';
 import CustomSelect from './CustomSelect';
+import * as api from '../services/itemApi';
 
 type ItemFormData = Omit<Item, 'id' | 'postedAt' | 'userId' | 'imageUrl' | 'isSoldOut' | 'user'>;
 
@@ -23,6 +24,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // カテゴリのオプション（アイコン付き）
@@ -81,6 +83,32 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
     }
   };
 
+  const handleGenerateDescription = async () => {
+    if (!formData.name || !formData.category) {
+      toast.error('商品名とカテゴリを入力してから生成してください');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const result = await api.generateDescription({
+        name: formData.name,
+        category: formData.category,
+        price: formData.price,
+        exhibitorName: formData.exhibitorName || undefined,
+      });
+
+      setFormData(prev => ({ ...prev, description: result.description }));
+      toast.success(`説明文を生成しました（残り${result.remaining}回）`);
+    } catch (error: any) {
+      console.error('Description generation error:', error);
+      const message = error.message || '説明文の生成に失敗しました';
+      toast.error(message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!imageFile && !existingItem) {
@@ -99,8 +127,31 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
       </div>
       
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">商品説明</label>
+        <div className="flex justify-between items-center mb-2">
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700">商品説明</label>
+          <button
+            type="button"
+            onClick={handleGenerateDescription}
+            disabled={isGenerating || !formData.name || !formData.category}
+            className="text-sm px-3 py-1 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                生成中...
+              </>
+            ) : (
+              <>
+                ✨ AIで生成
+              </>
+            )}
+          </button>
+        </div>
         <textarea name="description" id="description" value={formData.description} onChange={handleChange} required rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ut-blue focus:border-ut-blue sm:text-sm"></textarea>
+        <p className="mt-1 text-xs text-gray-500">※ 商品名とカテゴリを入力後、AIで自動生成できます（1日3回まで）</p>
       </div>
 
       <div>
