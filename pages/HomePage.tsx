@@ -102,7 +102,7 @@ const HomePage: React.FC = () => {
           />
         </div>
         
-        <div className="flex flex-col md:flex-row md:space-x-8 space-y-6 md:space-y-0">
+        <div className="flex flex-col md:flex-row md:space-x-8 space-y-6 md:space-y-0 md:items-start">
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-gray-700">カテゴリ</h3>
             <div className="flex flex-wrap gap-2">
