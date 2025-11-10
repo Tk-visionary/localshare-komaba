@@ -17,31 +17,27 @@ cd functions
 npm install
 ```
 
-### 2. Gmail アプリパスワードの設定
+### 2. 環境変数ファイルの設定
 
-Firebase Functions の環境変数として、Gmailのアプリパスワードを設定します：
+`functions/.env` ファイルを作成します（既に作成済みの場合はスキップ）：
 
 ```bash
-firebase functions:config:set gmail.password="xrhg kocp matl trsd"
+# functions/.env
+GMAIL_USER=taishi14ki@gmail.com
+GMAIL_APP_PASSWORD=xrhgkopcmatltrsd
+NOTIFICATION_EMAIL=taishi14ki@gmail.com
 ```
 
-**重要**: スペースなしで16文字をそのまま入力してください（スペースがあっても動作しますが、なしの方が確実です）。
+**重要**:
+- `.env` ファイルは `.gitignore` に含まれているため、Gitにコミットされません
+- アプリパスワードはスペースなしで入力してください
 
 ### 3. 環境変数の確認
 
-設定されているか確認：
+`.env` ファイルが正しく配置されていることを確認：
 
 ```bash
-firebase functions:config:get
-```
-
-出力例：
-```json
-{
-  "gmail": {
-    "password": "xrhg kocp matl trsd"
-  }
-}
+cat functions/.env
 ```
 
 ### 4. ビルド
@@ -67,18 +63,18 @@ cd functions && npm run deploy
 Firebase Emulatorでローカルテスト：
 
 ```bash
-# 環境変数をローカルに保存
-firebase functions:config:get > .runtimeconfig.json
+# .env ファイルが配置されていることを確認
+ls -la .env
 
-# Emulator起動
+# Emulator起動（.env ファイルは自動的に読み込まれます）
 npm run serve
 ```
 
 ## トラブルシューティング
 
-### エラー: "gmail.password is not set"
+### エラー: "GMAIL_APP_PASSWORD is not set"
 
-環境変数が設定されていません。手順2を実行してください。
+環境変数が設定されていません。`functions/.env` ファイルを確認してください。
 
 ### メールが送信されない
 
@@ -101,16 +97,16 @@ Cloud Functions（第2世代）は課金アカウントが必要です。Firebas
 
 ## 通知先の変更
 
-`src/index.ts` の以下の行を変更：
+`functions/.env` ファイルの `NOTIFICATION_EMAIL` を変更：
 
-```typescript
-const NOTIFICATION_EMAIL = 'taishi14ki@gmail.com';
+```bash
+NOTIFICATION_EMAIL=your-new-email@example.com
 ```
 
 複数のメールアドレスに送信する場合：
 
-```typescript
-const NOTIFICATION_EMAIL = 'email1@example.com, email2@example.com';
+```bash
+NOTIFICATION_EMAIL=email1@example.com, email2@example.com
 ```
 
 ## コスト
@@ -120,6 +116,7 @@ const NOTIFICATION_EMAIL = 'email1@example.com, email2@example.com';
 
 ## セキュリティ
 
-- Gmailアプリパスワードは Firebase Functions の環境変数として安全に保存
-- コードにハードコードされていません
+- Gmailアプリパスワードは `.env` ファイルに保存
+- `.env` ファイルは `.gitignore` に含まれており、Gitにコミットされません
+- デプロイ時に Firebase Functions の環境変数として自動的に設定されます
 - アプリパスワードは Google アカウントの「セキュリティ」からいつでも削除可能
