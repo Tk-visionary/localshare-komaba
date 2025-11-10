@@ -5,10 +5,10 @@ import * as nodemailer from 'nodemailer';
 // Initialize Firebase Admin
 admin.initializeApp();
 
-// Email configuration
-const GMAIL_USER = 'taishi14ki@gmail.com';
-const GMAIL_APP_PASSWORD = functions.config().gmail?.password || '';
-const NOTIFICATION_EMAIL = 'taishi14ki@gmail.com';
+// Email configuration from environment variables
+const GMAIL_USER = process.env.GMAIL_USER || 'taishi14ki@gmail.com';
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || '';
+const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'taishi14ki@gmail.com';
 
 // Create reusable transporter
 let transporter: nodemailer.Transporter | null = null;
