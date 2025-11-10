@@ -1,4 +1,4 @@
-import * as functions from 'firebase-functions';
+import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 import * as nodemailer from 'nodemailer';
 
@@ -27,13 +27,20 @@ function getTransporter() {
 }
 
 // Firestore trigger: When a new item is created
-export const onItemCreated = functions
-  .region('asia-northeast1') // Tokyo region
-  .firestore
-  .document('items/{itemId}')
-  .onCreate(async (snap, context) => {
+export const onItemCreated = onDocumentCreated(
+  {
+    document: 'items/{itemId}',
+    region: 'asia-northeast1', // Tokyo region
+  },
+  async (event) => {
+    const snap = event.data;
+    if (!snap) {
+      console.log('[onItemCreated] No data in event');
+      return { success: false };
+    }
+
     const item = snap.data();
-    const itemId = context.params.itemId;
+    const itemId = event.params.itemId;
 
     console.log('[onItemCreated] New item created:', itemId);
 
@@ -147,4 +154,5 @@ export const onItemCreated = functions
       // Don't throw error - we don't want to fail the function
       return { success: false, error: String(error) };
     }
-  });
+  }
+);
