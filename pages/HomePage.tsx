@@ -210,8 +210,8 @@ const HomePage: React.FC = () => {
             <span className="text-2xl">🗺️</span>
           </div>
 
-          {/* テキスト部分（ホバー時に展開） */}
-          <div className="max-w-0 group-hover:max-w-xs transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap">
+          {/* テキスト部分（モバイルでは常に表示、PCではホバー時に展開） */}
+          <div className="max-w-xs md:max-w-0 md:group-hover:max-w-xs transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap">
             <div className="px-4 flex items-center gap-2">
               <span>公式マップ</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
