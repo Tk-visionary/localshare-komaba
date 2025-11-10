@@ -15,6 +15,10 @@ let transporter: nodemailer.Transporter | null = null;
 
 function getTransporter() {
   if (!transporter) {
+    console.log('[getTransporter] GMAIL_USER:', GMAIL_USER);
+    console.log('[getTransporter] GMAIL_APP_PASSWORD length:', GMAIL_APP_PASSWORD.length);
+    console.log('[getTransporter] GMAIL_APP_PASSWORD exists:', !!GMAIL_APP_PASSWORD);
+
     transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 587,
