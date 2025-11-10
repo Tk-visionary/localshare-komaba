@@ -16,7 +16,7 @@ export interface GenerateDescriptionInput {
 export async function generateProductDescription(input: GenerateDescriptionInput): Promise<string> {
   try {
     const model = vertexAI.getGenerativeModel({
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-2.5-flash',
     });
 
     const prompt = createPrompt(input);
