@@ -5,12 +5,9 @@ service cloud.firestore {
 
     // Helper function to check if user email is allowed
     function isValidUser() {
-      // Allowed exceptions
-      let allowedEmails = ['taishi14ki@gmail.com'];
-
       return request.auth != null && (
         // Check if email is in exceptions list
-        request.auth.token.email in allowedEmails ||
+        request.auth.token.email == 'taishi14ki@gmail.com' ||
         // Check if email ends with allowed domain
         request.auth.token.email.matches('.*@g.ecc.u-tokyo.ac.jp')
       );
