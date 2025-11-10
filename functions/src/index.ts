@@ -31,6 +31,7 @@ export const onItemCreated = onDocumentCreated(
   {
     document: 'items/{itemId}',
     region: 'asia-northeast1', // Tokyo region
+    secrets: ['GMAIL_APP_PASSWORD'], // Use Secret Manager
   },
   async (event) => {
     const snap = event.data;
