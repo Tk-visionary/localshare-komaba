@@ -18,31 +18,29 @@ cd functions
 npm install
 ```
 
-### 2. Gmail アプリパスワードを Firebase Functions の環境変数に設定
+### 2. Gmail アプリパスワードを環境変数ファイルに設定
 
-**重要**: この手順はプロジェクトルートで実行してください（`functions/`ディレクトリ内ではなく）。
-
-```bash
-firebase functions:config:set gmail.password="xrhgkopcmatltrsd"
-```
-
-**注意**:
-- アプリパスワード `xrhg kocp matl trsd` からスペースを削除して入力
-- または、スペース付きのまま `"xrhg kocp matl trsd"` でもOK
-
-### 3. 設定を確認
+`functions/.env` ファイルが既に作成されています。内容を確認してください：
 
 ```bash
-firebase functions:config:get
+cat functions/.env
 ```
 
-以下のように表示されればOK：
-```json
-{
-  "gmail": {
-    "password": "xrhgkopcmatltrsd"
-  }
-}
+以下の内容が含まれているはずです：
+```
+GMAIL_USER=taishi14ki@gmail.com
+GMAIL_APP_PASSWORD=xrhgkopcmatltrsd
+NOTIFICATION_EMAIL=taishi14ki@gmail.com
+```
+
+**注意**: このファイルは `.gitignore` に含まれているため、Gitにコミットされません。
+
+### 3. 環境変数の確認
+
+`.env` ファイルが正しく配置されていることを確認：
+
+```bash
+ls -la functions/.env
 ```
 
 ### 4. ビルド
