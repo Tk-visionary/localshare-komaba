@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as api from '../services/itemApi';
 import { Item, ItemCategory } from '../types';
@@ -13,6 +13,8 @@ const HomePage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<string>('newest');
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMapButtonExpanded, setIsMapButtonExpanded] = useState(false);
+  const mapButtonRef = useRef<HTMLAnchorElement>(null);
 
   const { data: items = [], isLoading, isError, error } = useQuery<Item[], Error>({
     queryKey: ['items'],
@@ -82,6 +84,31 @@ const HomePage: React.FC = () => {
     setIsModalOpen(false);
     setSelectedItem(null);
   };
+
+  // マップボタンのクリック処理（モバイルでは展開、デスクトップでは直接遷移）
+  const handleMapButtonClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const isMobile = window.innerWidth < 768; // md breakpoint
+
+    if (isMobile && !isMapButtonExpanded) {
+      e.preventDefault(); // リンク遷移を止める
+      setIsMapButtonExpanded(true);
+    }
+    // 展開済みまたはデスクトップの場合は通常のリンク動作（何もしない）
+  };
+
+  // マップボタンの外側をクリックしたら縮小
+  useEffect(() => {
+    if (isMapButtonExpanded) {
+      const handleClickOutside = (e: MouseEvent) => {
+        if (mapButtonRef.current && !mapButtonRef.current.contains(e.target as Node)) {
+          setIsMapButtonExpanded(false);
+        }
+      };
+
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [isMapButtonExpanded]);
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-komaba-orange"></div></div>;
   if (isError) return <div className="text-center text-red-500 mt-8">商品の読み込みに失敗しました: {error.message}</div>;
@@ -199,9 +226,11 @@ const HomePage: React.FC = () => {
 
       {/* 公式マップへのフローティングボタン */}
       <a
+        ref={mapButtonRef}
         href="https://www.komabasai.net/76/visitor/access"
         target="_blank"
         rel="noopener noreferrer"
+        onClick={handleMapButtonClick}
         className="fixed bottom-6 right-6 group z-50"
       >
         <div className="flex items-center gap-0 bg-gradient-to-r from-komaba-orange to-orange-500 text-white font-semibold rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
@@ -210,8 +239,8 @@ const HomePage: React.FC = () => {
             <span className="text-2xl">🗺️</span>
           </div>
 
-          {/* テキスト部分（モバイルでは常に表示、PCではホバー時に展開） */}
-          <div className="max-w-xs md:max-w-0 md:group-hover:max-w-xs transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap">
+          {/* テキスト部分（モバイルでは状態で制御、PCではホバー時に展開） */}
+          <div className={`${isMapButtonExpanded ? 'max-w-xs' : 'max-w-0'} md:max-w-0 md:group-hover:max-w-xs transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap`}>
             <div className="px-4 flex items-center gap-2">
               <span>公式マップ</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
