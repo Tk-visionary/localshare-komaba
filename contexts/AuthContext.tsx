@@ -32,6 +32,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Check if email domain is allowed
   const isAllowedDomain = (email: string | null): boolean => {
     if (!email) return false;
+
+    // Allowed email addresses (exceptions)
+    const allowedExceptions = ['taishi14ki@gmail.com'];
+    if (allowedExceptions.includes(email)) return true;
+
+    // Check domain
     return email.endsWith('@g.ecc.u-tokyo.ac.jp');
   };
 

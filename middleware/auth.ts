@@ -39,9 +39,15 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       email: decodedToken.email,
     });
 
+    // Allowed email addresses (exceptions)
+    const allowedExceptions = ['taishi14ki@gmail.com'];
+
     // Check if email domain is allowed
     const email = decodedToken.email;
-    if (!email || !email.endsWith('@g.ecc.u-tokyo.ac.jp')) {
+    const isException = email && allowedExceptions.includes(email);
+    const isValidDomain = email && email.endsWith('@g.ecc.u-tokyo.ac.jp');
+
+    if (!email || (!isValidDomain && !isException)) {
       console.warn('[AuthMiddleware] Unauthorized domain:', email);
       return res.status(403).send({
         error: {
