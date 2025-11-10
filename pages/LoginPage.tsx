@@ -32,7 +32,8 @@ const LoginPage: React.FC = () => {
 
         <div className="mb-6 text-center">
           <h2 className="text-xl font-semibold text-gray-800">ログイン</h2>
-          <p className="text-sm text-gray-500 mt-2">Googleアカウントでログインしてください</p>
+          <p className="text-sm text-gray-500 mt-2">東京大学のメールアドレスでログインしてください</p>
+          <p className="text-xs text-gray-400 mt-1">（@g.ecc.u-tokyo.ac.jp）</p>
         </div>
 
         {error && (

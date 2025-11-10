@@ -29,6 +29,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [error, setError] = useState<string | null>(null);
   const [idToken, setIdToken] = useState<string | null>(null);
 
+  // Check if email domain is allowed
+  const isAllowedDomain = (email: string | null): boolean => {
+    if (!email) return false;
+    return email.endsWith('@g.ecc.u-tokyo.ac.jp');
+  };
+
   // Convert Firebase User to our User type
   const convertFirebaseUser = async (firebaseUser: FirebaseUser): Promise<User> => {
     return {
@@ -69,6 +75,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (result) {
           console.log('[AuthContext] ✅ Redirect result found:', result.user.email);
+
+          // Check if email domain is allowed
+          if (!isAllowedDomain(result.user.email)) {
+            console.warn('[AuthContext] Unauthorized domain:', result.user.email);
+            await firebaseSignOut(auth);
+            setError('このアプリは東京大学のメールアドレス（@g.ecc.u-tokyo.ac.jp）でのみ利用可能です。');
+            return;
+          }
+
           const user = await convertFirebaseUser(result.user);
           setCurrentUser(user);
           await updateIdToken(result.user);
@@ -101,6 +116,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('[AuthContext] Auth state changed:', firebaseUser?.email || 'null');
 
       if (firebaseUser) {
+        // Check if email domain is allowed
+        if (!isAllowedDomain(firebaseUser.email)) {
+          console.warn('[AuthContext] Unauthorized domain on auth state change:', firebaseUser.email);
+          await firebaseSignOut(auth);
+          setCurrentUser(null);
+          setIdToken(null);
+          setError('このアプリは東京大学のメールアドレス（@g.ecc.u-tokyo.ac.jp）でのみ利用可能です。');
+          setLoading(false);
+          return;
+        }
+
         const user = await convertFirebaseUser(firebaseUser);
         setCurrentUser(user);
         await updateIdToken(firebaseUser);
@@ -140,6 +166,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('[AuthContext] Attempting signInWithPopup...');
       const result = await signInWithPopup(auth, googleProvider);
       console.log('[AuthContext] ✅ Popup sign-in successful:', result.user.email);
+
+      // Check if email domain is allowed
+      if (!isAllowedDomain(result.user.email)) {
+        console.warn('[AuthContext] Unauthorized domain:', result.user.email);
+        await firebaseSignOut(auth);
+        setError('このアプリは東京大学のメールアドレス（@g.ecc.u-tokyo.ac.jp）でのみ利用可能です。');
+        setLoadingGoogleSignIn(false);
+        return;
+      }
 
       const user = await convertFirebaseUser(result.user);
       setCurrentUser(user);

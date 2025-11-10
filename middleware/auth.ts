@@ -16,6 +16,7 @@ declare global {
 /**
  * Firebase Authentication middleware
  * Verifies Firebase ID token from Authorization header and sets req.user
+ * Restricts access to @g.ecc.u-tokyo.ac.jp email addresses only
  */
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   console.log('[AuthMiddleware] Checking authentication...');
@@ -37,6 +38,17 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       uid: decodedToken.uid,
       email: decodedToken.email,
     });
+
+    // Check if email domain is allowed
+    const email = decodedToken.email;
+    if (!email || !email.endsWith('@g.ecc.u-tokyo.ac.jp')) {
+      console.warn('[AuthMiddleware] Unauthorized domain:', email);
+      return res.status(403).send({
+        error: {
+          message: 'このアプリは東京大学のメールアドレス（@g.ecc.u-tokyo.ac.jp）でのみ利用可能です。'
+        }
+      });
+    }
 
     // Set req.user for compatibility with existing code
     req.user = {
