@@ -181,22 +181,6 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* 公式マップへのリンク */}
-      <div className="mb-8">
-        <a
-          href="https://www.komabasai.net/76/visitor/access"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-komaba-orange to-orange-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:brightness-110 transition-all duration-200 transform hover:scale-105"
-        >
-          <span className="text-xl">🗺️</span>
-          <span>駒場祭 公式マップはこちら</span>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </a>
-      </div>
-
       {filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredItems.map(item => <ItemCard key={item.id} item={item} onClick={handleItemClick} />)}
@@ -212,6 +196,31 @@ const HomePage: React.FC = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
       />
+
+      {/* 公式マップへのフローティングボタン */}
+      <a
+        href="https://www.komabasai.net/76/visitor/access"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 group z-50"
+      >
+        <div className="flex items-center gap-0 bg-gradient-to-r from-komaba-orange to-orange-500 text-white font-semibold rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
+          {/* アイコン部分（常に表示） */}
+          <div className="flex items-center justify-center w-14 h-14 flex-shrink-0">
+            <span className="text-2xl">🗺️</span>
+          </div>
+
+          {/* テキスト部分（ホバー時に展開） */}
+          <div className="max-w-0 group-hover:max-w-xs transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap">
+            <div className="px-4 flex items-center gap-2">
+              <span>公式マップ</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </a>
     </div>
   );
 };
