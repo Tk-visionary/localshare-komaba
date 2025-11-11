@@ -96,6 +96,10 @@ export const onItemCreated = onDocumentCreated(
                 <div class="item-info">
                   <h2 style="margin-top: 0; color: #FF6B35;">${item.name}</h2>
 
+                  ${item.imageUrl ? `<div style="text-align: center; margin: 15px 0;">
+                    <img src="${item.imageUrl}" alt="${item.name}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                  </div>` : ''}
+
                   <p><span class="label">💰 価格:</span> <span class="value" style="font-size: 18px; font-weight: bold;">${priceText}</span></p>
 
                   <p><span class="label">📦 カテゴリ:</span> <span class="value">${item.category}</span></p>
