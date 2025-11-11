@@ -6,11 +6,13 @@ import { Resend } from 'resend';
 admin.initializeApp();
 
 // Email configuration from environment variables
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'taishi14ki@gmail.com';
 
-// Initialize Resend
-const resend = new Resend(RESEND_API_KEY);
+// Get Resend instance (lazy initialization)
+function getResend() {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+  return new Resend(RESEND_API_KEY);
+}
 
 // Firestore trigger: When a new item is created
 export const onItemCreated = onDocumentCreated(
@@ -63,7 +65,7 @@ export const onItemCreated = onDocumentCreated(
       });
 
       // Send email via Resend
-      const result = await resend.emails.send({
+      const result = await getResend().emails.send({
         from: '駒場祭フリマ <onboarding@resend.dev>',
         to: NOTIFICATION_EMAIL,
         subject: `【新商品登録】${item.name}`,
