@@ -11,6 +11,7 @@ export interface GenerateDescriptionInput {
   category: string;
   price: number;
   exhibitorName?: string;
+  boothDetail?: string;
 }
 
 export async function generateProductDescription(input: GenerateDescriptionInput): Promise<string> {
@@ -37,10 +38,11 @@ export async function generateProductDescription(input: GenerateDescriptionInput
 }
 
 function createPrompt(input: GenerateDescriptionInput): string {
-  const { name, category, price, exhibitorName } = input;
+  const { name, category, price, exhibitorName, boothDetail } = input;
 
   const priceText = price === 0 ? '無料' : `${price}円`;
-  const exhibitorText = exhibitorName ? `出店者: ${exhibitorName}` : '';
+  const exhibitorText = exhibitorName ? `- 出店者: ${exhibitorName}` : '';
+  const detailText = boothDetail ? `- 詳細情報: ${boothDetail}` : '';
 
   return `あなたは駒場祭（東京大学の学園祭）のフリマアプリで使用される商品説明を生成するAIアシスタントです。
 
@@ -51,11 +53,13 @@ function createPrompt(input: GenerateDescriptionInput): string {
 - カテゴリ: ${category}
 - 価格: ${priceText}
 ${exhibitorText}
+${detailText}
 
 【要件】
 - 2〜3文程度の簡潔な説明にしてください
 - 駒場祭の雰囲気に合った、親しみやすい文体で書いてください
 - 商品の魅力や特徴を強調してください
+- 詳細情報に個数や数量が含まれている場合は、その情報を説明に含めてください
 - 「です・ます調」を使用してください
 - 絵文字は使用しないでください
 - 商品名やカテゴリをそのまま繰り返さないでください
