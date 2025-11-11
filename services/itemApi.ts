@@ -74,6 +74,7 @@ export interface GenerateDescriptionRequest {
   category: string;
   price: number;
   exhibitorName?: string;
+  boothDetail?: string;
 }
 
 export interface GenerateDescriptionResponse {

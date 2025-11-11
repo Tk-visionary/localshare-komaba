@@ -96,6 +96,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
         category: formData.category,
         price: formData.price,
         exhibitorName: formData.exhibitorName || undefined,
+        boothDetail: formData.boothDetail || undefined,
       });
 
       setFormData(prev => ({ ...prev, description: result.description }));
