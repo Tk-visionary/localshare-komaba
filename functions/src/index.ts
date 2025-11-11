@@ -1,43 +1,23 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 // Initialize Firebase Admin
 admin.initializeApp();
 
 // Email configuration from environment variables
-const GMAIL_USER = process.env.GMAIL_USER || 'taishi14ki@gmail.com';
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || '';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'taishi14ki@gmail.com';
 
-// Create reusable transporter
-let transporter: nodemailer.Transporter | null = null;
-
-function getTransporter() {
-  if (!transporter) {
-    console.log('[getTransporter] GMAIL_USER:', GMAIL_USER);
-    console.log('[getTransporter] GMAIL_APP_PASSWORD length:', GMAIL_APP_PASSWORD.length);
-    console.log('[getTransporter] GMAIL_APP_PASSWORD exists:', !!GMAIL_APP_PASSWORD);
-
-    transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // Use SSL
-      auth: {
-        user: GMAIL_USER,
-        pass: GMAIL_APP_PASSWORD,
-      },
-    });
-  }
-  return transporter;
-}
+// Initialize Resend
+const resend = new Resend(RESEND_API_KEY);
 
 // Firestore trigger: When a new item is created
 export const onItemCreated = onDocumentCreated(
   {
     document: 'items/{itemId}',
     region: 'asia-northeast1', // Tokyo region
-    secrets: ['GMAIL_APP_PASSWORD'], // Use Secret Manager
+    secrets: ['RESEND_API_KEY'], // Use Secret Manager
   },
   async (event) => {
     const snap = event.data;
@@ -82,9 +62,9 @@ export const onItemCreated = onDocumentCreated(
         minute: '2-digit',
       });
 
-      // Send email
-      const mailOptions = {
-        from: `駒場祭フリマ <${GMAIL_USER}>`,
+      // Send email via Resend
+      const result = await resend.emails.send({
+        from: '駒場祭フリマ <onboarding@resend.dev>',
         to: NOTIFICATION_EMAIL,
         subject: `【新商品登録】${item.name}`,
         html: `
@@ -150,12 +130,11 @@ export const onItemCreated = onDocumentCreated(
           </body>
           </html>
         `,
-      };
+      });
 
-      await getTransporter().sendMail(mailOptions);
-      console.log('[onItemCreated] Email sent successfully to:', NOTIFICATION_EMAIL);
+      console.log('[onItemCreated] Email sent successfully via Resend:', result);
 
-      return { success: true };
+      return { success: true, emailId: result.data?.id };
     } catch (error) {
       console.error('[onItemCreated] Error sending email:', error);
       // Don't throw error - we don't want to fail the function
