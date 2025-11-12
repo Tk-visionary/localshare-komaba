@@ -28,7 +28,12 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onToggleSoldOut, onDelete, on
     >
       {item.isSoldOut && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-          <span className="text-white text-2xl font-bold transform -rotate-12 border-4 border-white px-4 py-2 bg-red-500 shadow-lg">{ITEM_STATUS.SOLD_OUT}</span>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-600 blur-md opacity-60 rounded-xl"></div>
+            <span className="relative inline-block text-white text-xl font-black tracking-wide transform -rotate-3 px-6 py-2.5 bg-gradient-to-br from-red-500 via-rose-500 to-red-600 shadow-2xl rounded-xl border-2 border-white/30">
+              {ITEM_STATUS.SOLD_OUT}
+            </span>
+          </div>
         </div>
       )}
 
