@@ -54,9 +54,12 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
         {/* 売り切れバッジ */}
         {item.isSoldOut && (
           <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-10">
-            <span className="text-white text-3xl font-bold transform -rotate-12 border-4 border-white px-6 py-3 bg-red-500 shadow-lg">
-              売り切れ
-            </span>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-600 blur-md opacity-60 rounded-xl"></div>
+              <span className="relative inline-block text-white text-3xl font-black tracking-wide transform -rotate-3 px-8 py-3.5 bg-gradient-to-br from-red-500 via-rose-500 to-red-600 shadow-2xl rounded-xl border-2 border-white/30">
+                売り切れ
+              </span>
+            </div>
           </div>
         )}
 
