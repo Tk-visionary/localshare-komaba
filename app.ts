@@ -27,30 +27,31 @@ if (admin.apps.length === 0) {
   if (process.env.NODE_ENV === 'test') {
     admin.initializeApp();
   } else {
-    console.log("Attempting to initialize Firebase Admin SDK in production mode...");
+    console.log("Attempting to initialize Firebase Admin SDK...");
 
-    if (process.env.FIREBASE_WEBAPP_CONFIG) {
+    // Use FIREBASE_SERVICE_ACCOUNT for server-side admin operations
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       try {
-        const firebaseConfig = JSON.parse(process.env.FIREBASE_WEBAPP_CONFIG);
-        // Extract project_id from service account config
-        const projectId = firebaseConfig.project_id;
-        // Default Firebase storage bucket is {projectId}.appspot.com
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        const projectId = serviceAccount.project_id;
         const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`;
 
         admin.initializeApp({
-          credential: admin.credential.cert(firebaseConfig),
+          credential: admin.credential.cert(serviceAccount),
           storageBucket: storageBucket
         });
-        console.log(`Firebase Admin SDK initialized successfully. Storage bucket: ${storageBucket}`);
+        console.log(`Firebase Admin SDK initialized with service account. Storage bucket: ${storageBucket}`);
       } catch (error) {
-        console.error("Error parsing FIREBASE_WEBAPP_CONFIG:", error);
-        // Fallback to default initialization if parsing fails
+        console.error("Error initializing Firebase Admin SDK with service account:", error);
+        // Fallback to default initialization (uses Application Default Credentials)
         admin.initializeApp();
         console.log("Firebase Admin SDK initialized with default credentials due to config error.");
       }
     } else {
+      // Use Application Default Credentials (ADC) for local development
+      // Run 'gcloud auth application-default login' to set up ADC
       admin.initializeApp();
-      console.log("Firebase Admin SDK initialized successfully with default credentials.");
+      console.log("Firebase Admin SDK initialized with Application Default Credentials.");
     }
   }
 }
