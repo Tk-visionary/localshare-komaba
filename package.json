@@ -7,7 +7,7 @@
     "dev": "vite & npm run server",
     "build": "vite build && npx tsc --project tsconfig.server.json",
     "preview": "vite preview",
-    "server": "ts-node-dev --respawn --transpile-only server.ts",
+    "server": "tsx watch server.ts",
     "start": "node dist/server.js",
     "test": "firebase emulators:exec --only firestore,auth './run-tests.sh'"
   },
@@ -54,6 +54,7 @@
     "supertest": "^7.1.4",
     "tailwindcss": "^4.1.16",
     "ts-jest": "^29.4.5",
+    "tsx": "^4.19.2",
     "vite": "^7.1.12"
   }
 }
