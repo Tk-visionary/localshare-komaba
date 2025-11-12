@@ -3,10 +3,11 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // Parse Firebase Web App config from environment variable
-const getFirebaseConfig = () => {
+const getFirebaseConfig = (env: Record<string, string>) => {
   try {
-    if (process.env.FIREBASE_WEBAPP_CONFIG) {
-      return JSON.parse(process.env.FIREBASE_WEBAPP_CONFIG);
+    const configStr = env.FIREBASE_WEBAPP_CONFIG || process.env.FIREBASE_WEBAPP_CONFIG;
+    if (configStr) {
+      return JSON.parse(configStr);
     }
   } catch (error) {
     console.warn('[Vite] Failed to parse FIREBASE_WEBAPP_CONFIG:', error);
@@ -16,7 +17,7 @@ const getFirebaseConfig = () => {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const firebaseConfig = getFirebaseConfig();
+  const firebaseConfig = getFirebaseConfig(env);
 
   console.log('[Vite] Firebase config loaded:', {
     hasApiKey: !!firebaseConfig.apiKey,
