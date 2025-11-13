@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
 
   console.log('[Vite] Firebase config loaded:', {
     hasApiKey: !!firebaseConfig.apiKey,
+    authDomain: firebaseConfig.authDomain || 'not set',
     projectId: firebaseConfig.projectId || 'not set',
   });
 
