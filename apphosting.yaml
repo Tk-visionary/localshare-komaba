@@ -30,6 +30,6 @@ runConfig:
 # Defines the settings for your app's build process.
 buildConfig:
   # Specifies the command to build your app.
-  buildCommand: npm run build
+  buildCommand: bash scripts/build-with-config.sh
   environmentVariables:
     GOOGLE_NODE_RUN_SCRIPTS: ""
