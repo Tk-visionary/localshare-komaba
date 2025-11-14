@@ -23,7 +23,7 @@ echo "✅ プロジェクト設定完了"
 echo ""
 
 # All secrets used in apphosting.yaml
-SECRETS=("FIREBASE_SERVICE_ACCOUNT" "FIREBASE_WEBAPP_CONFIG" "GOOGLE_CLIENT_SECRET" "SESSION_SECRET")
+SECRETS=("FIREBASE_SERVICE_ACCOUNT" "FIREBASE_CLIENT_CONFIG" "GOOGLE_CLIENT_SECRET" "SESSION_SECRET")
 
 for SECRET_NAME in "${SECRETS[@]}"; do
   echo "🔑 ${SECRET_NAME} への権限を付与中..."

@@ -21,8 +21,8 @@ runConfig:
       secret: FIREBASE_SERVICE_ACCOUNT
       availability:
         - RUNTIME
-    - variable: FIREBASE_WEBAPP_CONFIG
-      secret: FIREBASE_WEBAPP_CONFIG
+    - variable: FIREBASE_CLIENT_CONFIG
+      secret: FIREBASE_CLIENT_CONFIG
       availability:
         - BUILD
         - RUNTIME
@@ -30,6 +30,6 @@ runConfig:
 # Defines the settings for your app's build process.
 buildConfig:
   # Specifies the command to build your app.
-  buildCommand: npm run build
+  buildCommand: bash scripts/build-with-config.sh
   environmentVariables:
     GOOGLE_NODE_RUN_SCRIPTS: ""

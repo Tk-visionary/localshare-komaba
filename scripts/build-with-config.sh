@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+
+echo "🔥 Firebase クライアント設定を準備中..."
+
+# Secret Managerから設定を取得してファイルに書き出す
+if [ -n "$FIREBASE_CLIENT_CONFIG" ]; then
+  echo "✅ FIREBASE_CLIENT_CONFIG を使用（本番環境）"
+  echo "$FIREBASE_CLIENT_CONFIG" > firebase-client-config.json
+elif [ -n "$FIREBASE_WEBAPP_CONFIG" ]; then
+  echo "✅ FIREBASE_WEBAPP_CONFIG を使用（ローカル開発）"
+  echo "$FIREBASE_WEBAPP_CONFIG" > firebase-client-config.json
+else
+  echo "⚠️  Firebase設定が見つかりません。デフォルト設定を使用します。"
+  echo '{}' > firebase-client-config.json
+fi
+
+# 設定内容を確認（authDomainのみ表示）
+echo "📝 設定内容:"
+cat firebase-client-config.json | grep -o '"authDomain":"[^"]*"' || echo "authDomain not found"
+
+echo ""
+echo "🏗️  Viteビルドを開始..."
+npm run build
+
+echo "✅ ビルド完了！"
