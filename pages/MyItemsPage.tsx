@@ -9,10 +9,9 @@ import { Item } from '../types';
 import ItemCard from '../components/ItemCard';
 import ItemDetailModal from '../components/ItemDetailModal';
 import ConfirmModal from '../components/ConfirmModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
-interface MyItemsPageProps {}
-
-const MyItemsPage: React.FC<MyItemsPageProps> = () => {
+const MyItemsPage: React.FC = () => {
   const { currentUser } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -86,7 +85,7 @@ const MyItemsPage: React.FC<MyItemsPageProps> = () => {
     setSelectedItem(null);
   };
 
-  if (isLoading) return <div className="flex justify-center items-center h-64"><div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-komaba-orange"></div></div>;
+  if (isLoading) return <LoadingSpinner />;
   if (isError) return <div className="text-center text-red-500 mt-8">商品の読み込みに失敗しました: {error.message}</div>;
 
   return (

@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useModal } from '../hooks/useModal';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -23,24 +24,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onCancel,
   isDangerous = false,
 }) => {
-  // ESCキーでモーダルを閉じる
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onCancel();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden'; // スクロール防止
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onCancel]);
+  useModal(isOpen, onCancel);
 
   if (!isOpen) return null;
 

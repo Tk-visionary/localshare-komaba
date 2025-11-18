@@ -6,10 +6,9 @@ import { useAuth } from '../contexts/AuthContext';
 import ItemForm from '../components/ItemForm';
 import { Item } from '../types';
 import * as api from '../services/itemApi';
+import LoadingSpinner from '../components/LoadingSpinner';
 
-interface EditItemPageProps {}
-
-const EditItemPage: React.FC<EditItemPageProps> = () => {
+const EditItemPage: React.FC = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -65,7 +64,7 @@ const EditItemPage: React.FC<EditItemPageProps> = () => {
     updateItem({ itemData: changedData, imageFile });
   };
 
-  if (isLoading) return <div className="flex justify-center items-center h-64"><div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-komaba-orange"></div></div>;
+  if (isLoading) return <LoadingSpinner />;
   if (isError) return <div className="text-center text-red-500 mt-8">商品の読み込みに失敗しました。</div>;
   if (!item) return <div className="text-center text-gray-500 mt-8">商品が見つかりません。</div>;
 

@@ -7,14 +7,12 @@ import ItemForm from '../components/ItemForm';
 import { Item } from '../types';
 import * as api from '../services/itemApi';
 
-interface PostItemPageProps {}
-
 interface CreateItemPayload {
   formData: Omit<Item, 'id' | 'postedAt' | 'userId' | 'imageUrl' | 'isSoldOut'>;
   imageFile: File;
 }
 
-const PostItemPage: React.FC<PostItemPageProps> = () => {
+const PostItemPage: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const queryClient = useQueryClient();
@@ -35,7 +33,6 @@ const PostItemPage: React.FC<PostItemPageProps> = () => {
     },
     onError: (error) => {
       toast.error(`出品中にエラーが発生しました: ${error.message}`);
-      console.error(error);
     },
   });
 

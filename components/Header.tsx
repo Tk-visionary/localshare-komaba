@@ -3,6 +3,11 @@ import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { APP_NAME, APP_SUBTITLE } from '../constants';
 
+// Header専用の小さいスピナー
+const SmallSpinner: React.FC = () => (
+  <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-white" />
+);
+
 const Header: React.FC = () => {
   const { currentUser, logout, loading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -41,7 +46,7 @@ const Header: React.FC = () => {
             {/* Desktop Auth Section */}
             <div className="hidden md:block">
               {loading ? (
-                <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-white"></div>
+                <SmallSpinner />
               ) : currentUser ? (
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center">
@@ -98,7 +103,7 @@ const Header: React.FC = () => {
             <div className="pt-4 pb-3 border-t border-gray-700">
               {loading ? (
                  <div className="flex justify-center items-center h-10 px-5">
-                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-white"></div>
+                    <SmallSpinner />
                  </div>
               ) : currentUser ? (
                 <div className="flex items-center justify-between px-5">
