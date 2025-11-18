@@ -31,7 +31,23 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     build: {
-      outDir: 'dist/client'
+      outDir: 'dist/client',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Split vendor libraries into separate chunks
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-query': ['@tanstack/react-query'],
+            'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/storage'],
+          },
+        },
+      },
+      // Enable source maps for debugging
+      sourcemap: false,
+      // Minification settings
+      minify: 'esbuild',
+      // Chunk size warning limit
+      chunkSizeWarningLimit: 500,
     },
     resolve: {
       alias: {
