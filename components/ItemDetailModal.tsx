@@ -54,6 +54,9 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
             alt={item.name}
             className="w-full h-80 object-cover"
             loading="lazy"
+            width={800}
+            height={320}
+            decoding="async"
           />
         </div>
 
