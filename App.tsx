@@ -11,7 +11,16 @@ import EditItemPage from './pages/EditItemPage';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5分間はデータを新鮮として扱う
+      gcTime: 1000 * 60 * 30, // 30分間キャッシュを保持
+      retry: 1, // 失敗時は1回だけリトライ
+      refetchOnWindowFocus: false, // ウィンドウフォーカス時の自動再取得を無効化
+    },
+  },
+});
 
 function App() {
   return (

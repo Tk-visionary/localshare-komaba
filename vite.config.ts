@@ -10,18 +10,16 @@ const getFirebaseConfig = () => {
     const configFile = 'firebase-client-config.json';
     if (fs.existsSync(configFile)) {
       const content = fs.readFileSync(configFile, 'utf-8');
-      console.log('[Vite] Loading Firebase config from file:', configFile);
       return JSON.parse(content);
     }
 
     // Priority 2: Fall back to environment variables for local development
     const configStr = process.env.FIREBASE_CLIENT_CONFIG || process.env.FIREBASE_WEBAPP_CONFIG;
     if (configStr) {
-      console.log('[Vite] Loading Firebase config from environment variable');
       return JSON.parse(configStr);
     }
-  } catch (error) {
-    console.warn('[Vite] Failed to parse Firebase config:', error);
+  } catch {
+    // Config parsing failed
   }
   return {};
 };
@@ -29,12 +27,6 @@ const getFirebaseConfig = () => {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const firebaseConfig = getFirebaseConfig();
-
-  console.log('[Vite] Firebase config loaded:', {
-    hasApiKey: !!firebaseConfig.apiKey,
-    authDomain: firebaseConfig.authDomain || 'not set',
-    projectId: firebaseConfig.projectId || 'not set',
-  });
 
   return {
     plugins: [react()],
@@ -44,7 +36,6 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-        'animejs': 'animejs/lib/anime.es.js',
       }
     },
     server: {
