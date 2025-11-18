@@ -1,15 +1,24 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import Header from './components/Header';
-import HomePage from './pages/HomePage';
-import PostItemPage from './pages/PostItemPage';
-import MyItemsPage from './pages/MyItemsPage';
-import EditItemPage from './pages/EditItemPage';
-import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
+
+// Lazy load pages for code splitting
+const HomePage = lazy(() => import('./pages/HomePage'));
+const PostItemPage = lazy(() => import('./pages/PostItemPage'));
+const MyItemsPage = lazy(() => import('./pages/MyItemsPage'));
+const EditItemPage = lazy(() => import('./pages/EditItemPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex justify-center items-center min-h-[50vh]">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-komaba-orange"></div>
+  </div>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,15 +40,17 @@ function App() {
             <Toaster position="top-center" reverseOrder={false} />
             <Header />
             <main className="flex-grow">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route element={<ProtectedRoute />}>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route element={<ProtectedRoute />}>
                     <Route path="/post-item" element={<PostItemPage />} />
                     <Route path="/my-items" element={<MyItemsPage />} />
                     <Route path="/edit-item/:itemId" element={<EditItemPage />} />
-                </Route>
-              </Routes>
+                  </Route>
+                </Routes>
+              </Suspense>
             </main>
             <footer className="bg-komaba-header text-white text-center p-4 mt-8">
               <p>&copy; 2025 LocalShare Project. All rights reserved.</p>

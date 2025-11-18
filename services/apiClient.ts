@@ -31,9 +31,8 @@ export async function fetchJson(input: RequestInfo, init?: RequestInit, timeout 
   if (auth.currentUser) {
     try {
       idToken = await auth.currentUser.getIdToken();
-      console.log('[ApiClient] ID token obtained for request');
-    } catch (error) {
-      console.error('[ApiClient] Failed to get ID token:', error);
+    } catch {
+      // Token retrieval failed, proceed without authentication
     }
   }
 
