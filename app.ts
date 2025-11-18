@@ -17,9 +17,6 @@ import { authMiddleware } from './middleware/auth.js';
 if (process.env.NODE_ENV !== 'production') {
   const envFile = '.env';
   dotenv.config({ path: envFile });
-  console.log('[App] Loaded environment variables from', envFile);
-} else {
-  console.log('[App] Running in production - using platform-provided environment variables');
 }
 
 // --- Firebase 初期化 ---
@@ -27,8 +24,6 @@ if (admin.apps.length === 0) {
   if (process.env.NODE_ENV === 'test') {
     admin.initializeApp();
   } else {
-    console.log("Attempting to initialize Firebase Admin SDK...");
-
     // Use FIREBASE_SERVICE_ACCOUNT for server-side admin operations
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       try {
@@ -40,18 +35,14 @@ if (admin.apps.length === 0) {
           credential: admin.credential.cert(serviceAccount),
           storageBucket: storageBucket
         });
-        console.log(`Firebase Admin SDK initialized with service account. Storage bucket: ${storageBucket}`);
-      } catch (error) {
-        console.error("Error initializing Firebase Admin SDK with service account:", error);
+      } catch {
         // Fallback to default initialization (uses Application Default Credentials)
         admin.initializeApp();
-        console.log("Firebase Admin SDK initialized with default credentials due to config error.");
       }
     } else {
       // Use Application Default Credentials (ADC) for local development
       // Run 'gcloud auth application-default login' to set up ADC
       admin.initializeApp();
-      console.log("Firebase Admin SDK initialized with Application Default Credentials.");
     }
   }
 }
@@ -98,17 +89,13 @@ app.use(morgan('combined'));
 app.use(express.json());
 
 const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
-console.log('CORS allowed origins:', allowed.length > 0 ? allowed : 'all origins (no restriction)');
 
 app.use(cors({
   origin(origin, callback) {
-    console.log('CORS check for origin:', origin);
     if (!origin) return callback(null, true);
     if (allowed.length === 0 || allowed.includes(origin)) {
-      console.log('CORS allowed:', origin);
       return callback(null, true);
     }
-    console.error('CORS blocked:', origin);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -152,8 +139,7 @@ app.get(/^\/(?!.*\.).*$/, (req, res) => {
 });
 
 // --- エラーハンドラ ---
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Unhandled error:', err.stack);
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   const errorMessage = process.env.NODE_ENV === 'production'
     ? 'Internal Server Error'
     : err.message || 'Internal Server Error';
