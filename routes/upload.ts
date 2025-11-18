@@ -29,8 +29,7 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
       }
     });
 
-    blobStream.on('error', (err) => {
-      console.error('Upload stream error:', err);
+    blobStream.on('error', () => {
       res.status(500).json({ error: 'Upload failed' });
     });
 
@@ -40,17 +39,14 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
         const bucketName = bucket().name;
         const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
 
-        console.log(`File uploaded successfully: ${publicUrl}`);
         res.status(200).json({ url: publicUrl });
-      } catch (err) {
-        console.error('Error generating download URL:', err);
+      } catch {
         res.status(500).json({ error: 'Failed to generate download URL' });
       }
     });
 
     blobStream.end(req.file.buffer);
-  } catch (err) {
-    console.error('Upload error:', err);
+  } catch {
     res.status(500).json({ error: 'Upload failed' });
   }
 });

@@ -57,9 +57,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         const token = await firebaseUser.getIdToken();
         setIdToken(token);
-        console.log('[AuthContext] ID token updated');
-      } catch (error) {
-        console.error('[AuthContext] Error getting ID token:', error);
+      } catch {
         setIdToken(null);
       }
     } else {
@@ -71,20 +69,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const checkRedirectResult = async () => {
       try {
-        console.log('[AuthContext] Checking redirect result...');
-        console.log('[AuthContext] Current URL:', window.location.href);
-        console.log('[AuthContext] Current auth state:', auth.currentUser?.email || 'null');
-
         const result = await getRedirectResult(auth);
 
-        console.log('[AuthContext] getRedirectResult returned:', result);
-
         if (result) {
-          console.log('[AuthContext] ✅ Redirect result found:', result.user.email);
-
           // Check if email domain is allowed
           if (!isAllowedDomain(result.user.email)) {
-            console.warn('[AuthContext] Unauthorized domain:', result.user.email);
             await firebaseSignOut(auth);
             setError('このアプリは東京大学のメールアドレス（@g.ecc.u-tokyo.ac.jp）でのみ利用可能です。');
             return;
@@ -94,13 +83,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setCurrentUser(user);
           await updateIdToken(result.user);
           setError(null);
-        } else {
-          console.log('[AuthContext] ℹ️ No redirect result (user may not have logged in yet)');
         }
       } catch (error: any) {
-        console.error('[AuthContext] ❌ Error handling redirect result:', error);
-        console.error('[AuthContext] Error code:', error.code);
-        console.error('[AuthContext] Error message:', error.message);
         if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
           setError('認証がキャンセルされました。');
         } else {
@@ -116,15 +100,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Monitor auth state changes
   useEffect(() => {
-    console.log('[AuthContext] Setting up auth state listener...');
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('[AuthContext] Auth state changed:', firebaseUser?.email || 'null');
-
       if (firebaseUser) {
         // Check if email domain is allowed
         if (!isAllowedDomain(firebaseUser.email)) {
-          console.warn('[AuthContext] Unauthorized domain on auth state change:', firebaseUser.email);
           await firebaseSignOut(auth);
           setCurrentUser(null);
           setIdToken(null);
@@ -144,10 +123,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(false);
     });
 
-    return () => {
-      console.log('[AuthContext] Cleaning up auth state listener');
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   // Refresh token periodically (every 50 minutes)
@@ -155,7 +131,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!auth.currentUser) return;
 
     const refreshInterval = setInterval(async () => {
-      console.log('[AuthContext] Refreshing ID token...');
       await updateIdToken(auth.currentUser);
     }, 50 * 60 * 1000); // 50 minutes
 
@@ -163,19 +138,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [currentUser]);
 
   const signInWithGoogle = async () => {
-    console.log('[AuthContext] Starting Google sign-in with popup...');
     setLoadingGoogleSignIn(true);
     setError(null);
 
     try {
-      // Try popup first (works on all devices with COOP header fix)
-      console.log('[AuthContext] Attempting signInWithPopup...');
       const result = await signInWithPopup(auth, googleProvider);
-      console.log('[AuthContext] ✅ Popup sign-in successful:', result.user.email);
 
       // Check if email domain is allowed
       if (!isAllowedDomain(result.user.email)) {
-        console.warn('[AuthContext] Unauthorized domain:', result.user.email);
         await firebaseSignOut(auth);
         setError('このアプリは東京大学のメールアドレス（@g.ecc.u-tokyo.ac.jp）でのみ利用可能です。');
         setLoadingGoogleSignIn(false);
@@ -187,18 +157,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await updateIdToken(result.user);
       setLoadingGoogleSignIn(false);
     } catch (error: any) {
-      console.error('[AuthContext] ❌ Popup sign-in failed:', error);
-      console.error('[AuthContext] Error code:', error.code);
-      console.error('[AuthContext] Error message:', error.message);
-
       // If popup is blocked or fails, try redirect as fallback
       if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-        console.log('[AuthContext] Popup blocked, trying redirect instead...');
         try {
           await signInWithRedirect(auth, googleProvider);
-          console.log('[AuthContext] ✅ Redirect initiated');
         } catch (redirectError: any) {
-          console.error('[AuthContext] ❌ Redirect also failed:', redirectError);
           setError(`ログインに失敗しました: ${redirectError.message}`);
           setLoadingGoogleSignIn(false);
         }
@@ -210,14 +173,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = async () => {
-    console.log('[AuthContext] Logging out...');
     try {
       await firebaseSignOut(auth);
       setCurrentUser(null);
       setIdToken(null);
-      console.log('[AuthContext] Logout successful');
-    } catch (error) {
-      console.error('[AuthContext] Logout error:', error);
+    } catch {
       setError('ログアウト中にエラーが発生しました。');
     }
   };

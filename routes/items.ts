@@ -21,7 +21,6 @@ const convertTimestamps = (data: any): any => {
       converted.postedAt = converted.postedAt;
     } else {
       // Fallback to current date if timestamp is invalid
-      console.warn('Invalid postedAt timestamp:', converted.postedAt);
       converted.postedAt = new Date().toISOString();
     }
   }
@@ -47,27 +46,21 @@ router.get('/', async (req: Request, res: Response<Item[] | { error: string }>, 
     const { userId } = req.query;
     let query: admin.firestore.Query = db().collection('items');
     if (userId && typeof userId === 'string') {
-      console.log(`[Items API] Fetching items for userId: ${userId}`);
       query = query.where('userId', '==', userId);
-    } else {
-      console.log('[Items API] Fetching all items');
     }
     const itemsSnapshot = await query.orderBy('postedAt', 'desc').get();
-    console.log(`[Items API] Found ${itemsSnapshot.docs.length} items`);
 
     const items: Item[] = itemsSnapshot.docs.map(doc => {
       try {
         const data = convertTimestamps(doc.data());
         return { id: doc.id, ...data } as Item;
-      } catch (err) {
-        console.error(`Error converting timestamps for item ${doc.id}:`, err);
+      } catch {
         // Return the item with raw data if conversion fails
         return { id: doc.id, ...doc.data() } as Item;
       }
     });
     res.json(items);
   } catch (error) {
-    console.error('[Items API] Error fetching items:', error);
     next(error);
   }
 });
