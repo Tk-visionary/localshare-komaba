@@ -41,7 +41,15 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onToggleSoldOut, onDelete, on
       <div className="flex flex-col h-full">
         {/* This div contains only the content that should be dimmed when sold out. */}
         <div className={`flex-1 ${item.isSoldOut ? 'filter grayscale opacity-75' : ''}`}>
-          <img src={item.imageUrl} alt={item.name} className="w-full h-48 object-cover" loading="lazy" />
+          <img
+            src={item.imageUrl}
+            alt={item.name}
+            className="w-full h-48 object-cover"
+            loading="lazy"
+            width={400}
+            height={192}
+            decoding="async"
+          />
           <div className="p-4">
             <div className="flex justify-between items-start">
               <h3 className="text-lg font-bold text-gray-800">{item.name}</h3>
