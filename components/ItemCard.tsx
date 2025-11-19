@@ -9,9 +9,10 @@ interface ItemCardProps {
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
   onClick?: (item: Item) => void;
+  priority?: boolean; // For LCP optimization
 }
 
-const ItemCard: React.FC<ItemCardProps> = ({ item, onToggleSoldOut, onDelete, onEdit, onClick }) => {
+const ItemCard: React.FC<ItemCardProps> = ({ item, onToggleSoldOut, onDelete, onEdit, onClick, priority = false }) => {
 
   const handleCardClick = (e: React.MouseEvent) => {
     // ボタンクリック時はモーダルを開かない
@@ -45,10 +46,11 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onToggleSoldOut, onDelete, on
             src={item.imageUrl}
             alt={item.name}
             className="w-full h-48 object-cover"
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
             width={400}
             height={192}
             decoding="async"
+            {...(priority && { fetchPriority: "high" as const })}
           />
           <div className="p-4">
             <div className="flex justify-between items-start">
