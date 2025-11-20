@@ -96,8 +96,20 @@ const Header: React.FC = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden" id="mobile-menu">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {/* Primary action - 出品する (highlighted) */}
+              <NavLink
+                to="/post-item"
+                className="block px-4 py-3 rounded-lg text-base font-bold bg-komaba-orange hover:brightness-90 text-white transition-all shadow-md flex items-center gap-2"
+                onClick={closeMobileMenu}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                出品する
+              </NavLink>
+
+              {/* Secondary navigation */}
               <NavLink to="/" className={mobileNavLinkClasses} onClick={closeMobileMenu}>ホーム</NavLink>
-              <NavLink to="/post-item" className={mobileNavLinkClasses} onClick={closeMobileMenu}>出品する</NavLink>
               <NavLink to="/my-items" className={mobileNavLinkClasses} onClick={closeMobileMenu}>マイページ</NavLink>
             </div>
             <div className="pt-4 pb-3 border-t border-gray-700">
