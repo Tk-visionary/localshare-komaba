@@ -50,17 +50,12 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
     const fileName = `uploads/${uuidv4()}-${originalName}.webp`;
     const blob = bucket().file(fileName);
 
-    // Generate a download token for public access
-    const downloadToken = uuidv4();
-
     const blobStream = blob.createWriteStream({
       metadata: {
         contentType,
         cacheControl: 'public, max-age=31536000',
-        metadata: {
-          firebaseStorageDownloadTokens: downloadToken
-        }
-      }
+      },
+      public: true, // Make file publicly accessible
     });
 
     blobStream.on('error', () => {
@@ -69,9 +64,12 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
 
     blobStream.on('finish', async () => {
       try {
-        // Generate public URL with download token
+        // Make file publicly accessible (redundant with public:true but ensures ACL is set)
+        await blob.makePublic();
+
+        // Generate direct GCS public URL (no token needed, much faster)
         const bucketName = bucket().name;
-        const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
+        const publicUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
 
         res.status(200).json({ url: publicUrl });
       } catch {
