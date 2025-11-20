@@ -18,8 +18,8 @@ const Header: React.FC = () => {
     }`;
 
   const mobileNavLinkClasses = ({ isActive }: { isActive: boolean }): string =>
-    `block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-      isActive ? 'bg-komaba-orange text-white' : 'text-gray-300 hover:bg-komaba-orange/20 hover:text-white'
+    `block px-3 py-2 rounded-md text-base font-medium transition-colors border-l-4 ${
+      isActive ? 'border-komaba-orange text-white bg-gray-700/50' : 'border-transparent text-gray-300 hover:bg-gray-700/30 hover:text-white'
     }`;
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
