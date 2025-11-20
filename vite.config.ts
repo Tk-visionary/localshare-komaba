@@ -38,7 +38,8 @@ export default defineConfig(({ mode }) => {
             // Split vendor libraries into separate chunks
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             'vendor-query': ['@tanstack/react-query'],
-            'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/storage'],
+            'vendor-firebase': ['firebase/app', 'firebase/auth'],
+            'vendor-toast': ['react-hot-toast'],
           },
         },
       },
@@ -46,6 +47,8 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       // Minification settings
       minify: 'esbuild',
+      target: 'es2015',
+      cssCodeSplit: true,
       // Chunk size warning limit
       chunkSizeWarningLimit: 500,
     },
