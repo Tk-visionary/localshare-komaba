@@ -16,6 +16,7 @@ interface GenerateRequest extends Request {
     price: number;
     exhibitorName?: string;
     boothDetail?: string;
+    existingDescription?: string;
   };
   user?: {
     uid: string;
@@ -76,7 +77,7 @@ router.post('/generate-description', async (req: GenerateRequest, res: Response)
     }
 
     // Validate request body
-    const { name, category, price, exhibitorName, boothDetail } = req.body;
+    const { name, category, price, exhibitorName, boothDetail, existingDescription } = req.body;
 
     if (!name || !category || price === undefined) {
       return res.status(400).json({ error: '商品名、カテゴリ、価格は必須です' });
@@ -89,6 +90,7 @@ router.post('/generate-description', async (req: GenerateRequest, res: Response)
       price,
       exhibitorName,
       boothDetail,
+      existingDescription,
     };
 
     const description = await generateProductDescription(input);
