@@ -97,6 +97,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
         price: formData.price,
         exhibitorName: formData.exhibitorName || undefined,
         boothDetail: formData.boothDetail || undefined,
+        existingDescription: formData.description || undefined,
       });
 
       setFormData(prev => ({ ...prev, description: result.description }));
@@ -152,7 +153,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
           </button>
         </div>
         <textarea name="description" id="description" value={formData.description} onChange={handleChange} required rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ut-blue focus:border-ut-blue sm:text-sm"></textarea>
-        <p className="mt-1 text-xs text-gray-500">※ 商品名とカテゴリを入力すれば生成可能です。価格や出店団体名なども入力すると、より精度の高い説明が生成されます（1日3回まで）</p>
+        <p className="mt-1 text-xs text-gray-500">※ 商品名とカテゴリで生成可能。価格・出店団体名を入力するとより精度が上がります。個数・数量（例: 30膳x3セット）を先に入力してから生成すると、その情報も含まれます（1日3回まで）</p>
       </div>
 
       <div>
