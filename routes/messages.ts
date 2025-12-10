@@ -31,13 +31,16 @@ router.use(authMiddleware);
 router.get('/conversations', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.uid;
+        console.log('[Messages API] Fetching conversations for userId:', userId);
 
         // Query conversations where user is a participant
+        // Note: Removed orderBy to avoid index issues, sorting in app instead
         const conversationsSnapshot = await db()
             .collection('conversations')
             .where('participants', 'array-contains', userId)
-            .orderBy('lastMessageAt', 'desc')
             .get();
+
+        console.log('[Messages API] Found conversations:', conversationsSnapshot.size);
 
         const conversations: Conversation[] = [];
 
@@ -93,6 +96,13 @@ router.get('/conversations', async (req: Request, res: Response, next: NextFunct
                 unreadCount: unreadSnapshot.size,
             } as Conversation);
         }
+
+        // Sort by lastMessageAt descending (since we can't use orderBy with array-contains without index)
+        conversations.sort((a, b) => {
+            const timeA = a.lastMessageAt instanceof Date ? a.lastMessageAt.getTime() : new Date(a.lastMessageAt).getTime() || 0;
+            const timeB = b.lastMessageAt instanceof Date ? b.lastMessageAt.getTime() : new Date(b.lastMessageAt).getTime() || 0;
+            return timeB - timeA;
+        });
 
         res.json(conversations);
     } catch (error) {
