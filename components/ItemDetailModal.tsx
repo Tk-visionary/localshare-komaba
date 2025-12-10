@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Item } from '../types';
 import { timeSince } from '../utils/date';
 import { useAuth } from '../contexts/AuthContext';
+import { useModal } from '../hooks/useModal';
 import * as messageApi from '../services/messageApi';
 
 interface ItemDetailModalProps {
@@ -42,24 +43,9 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
       setIsStartingChat(false);
     }
   };
-  // ESCキーでモーダルを閉じる
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden'; // スクロール防止
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onClose]);
+  // useModal hook for ESC key and body scroll lock
+  useModal(isOpen, onClose);
 
   if (!isOpen || !item) return null;
 
@@ -102,6 +88,10 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
             src={item.imageUrl}
             alt={item.name}
             className="w-full h-80 object-cover"
+            loading="lazy"
+            width={800}
+            height={320}
+            decoding="async"
           />
         </div>
 

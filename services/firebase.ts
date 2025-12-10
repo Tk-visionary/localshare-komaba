@@ -13,12 +13,6 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-console.log('[Firebase] Initializing Firebase SDK...', {
-  hasApiKey: !!firebaseConfig.apiKey,
-  authDomain: firebaseConfig.authDomain,
-  projectId: firebaseConfig.projectId,
-});
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
@@ -30,7 +24,5 @@ const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: 'select_account', // Always show account selection
 });
-
-console.log('[Firebase] Firebase SDK initialized successfully');
 
 export { auth, googleProvider };
