@@ -26,13 +26,17 @@ const MessagesPage: React.FC = () => {
 
     // Load conversation from URL param on mount
     useEffect(() => {
-        if (initialConversationId && conversations.length > 0 && !selectedConversation) {
-            const conversation = conversations.find(c => c.id === initialConversationId);
-            if (conversation) {
-                handleSelectConversation(conversation);
+        if (initialConversationId && !selectedConversation) {
+            // First check if it's in the already-loaded list
+            const conversationInList = conversations.find(c => c.id === initialConversationId);
+            if (conversationInList) {
+                handleSelectConversation(conversationInList);
+            } else if (!isLoadingConversations) {
+                // If not in list (e.g., newly created), fetch it directly
+                fetchMessages(initialConversationId);
             }
         }
-    }, [initialConversationId, conversations, selectedConversation]);
+    }, [initialConversationId, conversations, selectedConversation, isLoadingConversations]);
 
     // Fetch messages for selected conversation
     const fetchMessages = useCallback(async (conversationId: string) => {
