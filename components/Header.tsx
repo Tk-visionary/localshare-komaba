@@ -8,13 +8,11 @@ const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }): string =>
-    `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-      isActive ? 'bg-komaba-orange/30 text-white' : 'text-gray-300 hover:bg-komaba-orange/20 hover:text-white'
+    `px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? 'bg-komaba-orange/30 text-white' : 'text-gray-300 hover:bg-komaba-orange/20 hover:text-white'
     }`;
 
   const mobileNavLinkClasses = ({ isActive }: { isActive: boolean }): string =>
-    `block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-      isActive ? 'bg-komaba-orange text-white' : 'text-gray-300 hover:bg-komaba-orange/20 hover:text-white'
+    `block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive ? 'bg-komaba-orange text-white' : 'text-gray-300 hover:bg-komaba-orange/20 hover:text-white'
     }`;
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -33,6 +31,7 @@ const Header: React.FC = () => {
                 <NavLink to="/" className={navLinkClasses}>ホーム</NavLink>
                 <NavLink to="/post-item" className={navLinkClasses}>出品する</NavLink>
                 <NavLink to="/my-items" className={navLinkClasses}>マイページ</NavLink>
+                <NavLink to="/messages" className={navLinkClasses}>メッセージ</NavLink>
               </div>
             </div>
           </div>
@@ -94,12 +93,13 @@ const Header: React.FC = () => {
               <NavLink to="/" className={mobileNavLinkClasses} onClick={closeMobileMenu}>ホーム</NavLink>
               <NavLink to="/post-item" className={mobileNavLinkClasses} onClick={closeMobileMenu}>出品する</NavLink>
               <NavLink to="/my-items" className={mobileNavLinkClasses} onClick={closeMobileMenu}>マイページ</NavLink>
+              <NavLink to="/messages" className={mobileNavLinkClasses} onClick={closeMobileMenu}>メッセージ</NavLink>
             </div>
             <div className="pt-4 pb-3 border-t border-gray-700">
               {loading ? (
-                 <div className="flex justify-center items-center h-10 px-5">
-                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-white"></div>
-                 </div>
+                <div className="flex justify-center items-center h-10 px-5">
+                  <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-white"></div>
+                </div>
               ) : currentUser ? (
                 <div className="flex items-center justify-between px-5">
                   <div className="flex items-center">

@@ -55,3 +55,33 @@ export interface Notification {
   message: string;
   type: 'success' | 'error';
 }
+
+// DM機能: 会話のデータ構造
+export interface Conversation {
+  id: string;
+  participants: string[]; // ユーザーIDの配列
+  itemId?: string; // 関連する商品ID（任意）
+  item?: {
+    name: string;
+    imageUrl: string;
+  } | null;
+  lastMessage: string;
+  lastMessageAt: Date | string;
+  createdAt: Date | string;
+  otherUser?: {
+    id: string;
+    name: string;
+    picture?: string;
+  } | null;
+  unreadCount?: number;
+}
+
+// DM機能: メッセージのデータ構造
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  text: string;
+  createdAt: Date | string;
+  read: boolean;
+}

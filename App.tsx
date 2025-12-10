@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import PostItemPage from './pages/PostItemPage';
 import MyItemsPage from './pages/MyItemsPage';
 import EditItemPage from './pages/EditItemPage';
+import MessagesPage from './pages/MessagesPage';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -26,9 +27,10 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route element={<ProtectedRoute />}>
-                    <Route path="/post-item" element={<PostItemPage />} />
-                    <Route path="/my-items" element={<MyItemsPage />} />
-                    <Route path="/edit-item/:itemId" element={<EditItemPage />} />
+                  <Route path="/post-item" element={<PostItemPage />} />
+                  <Route path="/my-items" element={<MyItemsPage />} />
+                  <Route path="/edit-item/:itemId" element={<EditItemPage />} />
+                  <Route path="/messages" element={<MessagesPage />} />
                 </Route>
               </Routes>
             </main>

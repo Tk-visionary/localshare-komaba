@@ -10,6 +10,7 @@ import dotenv from 'dotenv';
 import uploadRoutes from './routes/upload.js';
 import itemRoutes from './routes/items.js';
 import aiRoutes from './routes/ai.js';
+import messageRoutes from './routes/messages.js';
 import { authMiddleware } from './middleware/auth.js';
 
 // Only load .env files in development
@@ -137,6 +138,8 @@ app.use('/upload', authMiddleware, uploadRoutes);
 app.use('/api/items', itemRoutes);
 // AI routes require authentication
 app.use('/api/ai', authMiddleware, aiRoutes);
+// Messages routes (authentication is handled inside the router)
+app.use('/api/messages', messageRoutes);
 
 // --- SPA fallback ---
 // Only serve index.html for non-file requests (excludes .js, .css, .svg, etc.)

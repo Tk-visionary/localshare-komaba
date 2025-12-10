@@ -26,6 +26,15 @@ runConfig:
       availability:
         - BUILD
         - RUNTIME
+    # Resend API for email notifications (reports)
+    - variable: RESEND_API_KEY
+      secret: RESEND_API_KEY
+      availability:
+        - RUNTIME
+    - variable: NOTIFICATION_EMAIL
+      value: taishi14ki@gmail.com
+      availability:
+        - RUNTIME
 
 # Defines the settings for your app's build process.
 buildConfig:

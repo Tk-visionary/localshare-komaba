@@ -1,6 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { Item } from '../types';
 import { timeSince } from '../utils/date';
+import { useAuth } from '../contexts/AuthContext';
+import * as messageApi from '../services/messageApi';
 
 interface ItemDetailModalProps {
   item: Item | null;
@@ -9,6 +13,35 @@ interface ItemDetailModalProps {
 }
 
 const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose }) => {
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const [isStartingChat, setIsStartingChat] = useState(false);
+
+  // 出品者にメッセージを送る
+  const handleSendMessage = async () => {
+    if (!item || !currentUser) {
+      toast.error('ログインしてください');
+      navigate('/login');
+      return;
+    }
+
+    if (item.userId === currentUser.id) {
+      toast.error('自分の出品にはメッセージを送れません');
+      return;
+    }
+
+    setIsStartingChat(true);
+    try {
+      const conversation = await messageApi.createConversation(item.userId, item.id);
+      onClose();
+      navigate(`/messages?id=${conversation.id}`);
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      toast.error('メッセージの開始に失敗しました');
+    } finally {
+      setIsStartingChat(false);
+    }
+  };
   // ESCキーでモーダルを閉じる
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -114,8 +147,25 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
             </div>
           </div>
 
-          {/* 閉じるボタン */}
-          <div className="flex justify-end">
+          {/* アクションボタン */}
+          <div className="flex justify-end gap-3">
+            {/* メッセージボタン（自分の出品でない場合のみ表示） */}
+            {currentUser && item.userId !== currentUser.id && (
+              <button
+                onClick={handleSendMessage}
+                disabled={isStartingChat}
+                className="px-6 py-3 bg-komaba-orange text-white rounded-lg hover:brightness-90 transition-colors font-medium flex items-center gap-2 disabled:opacity-50"
+              >
+                {isStartingChat ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                )}
+                メッセージを送る
+              </button>
+            )}
             <button
               onClick={onClose}
               className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
