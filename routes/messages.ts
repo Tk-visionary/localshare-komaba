@@ -49,14 +49,12 @@ router.get('/conversations', async (req: Request, res: Response, next: NextFunct
             let otherUser = null;
             if (otherUserId) {
                 const userDoc = await db().collection('users').doc(otherUserId).get();
-                if (userDoc.exists) {
-                    const userData = userDoc.data();
-                    otherUser = {
-                        id: otherUserId,
-                        name: userData?.name || 'Unknown',
-                        picture: userData?.picture || null,
-                    };
-                }
+                // Use anonymous ID and default avatar for privacy
+                otherUser = {
+                    id: otherUserId,
+                    name: `ユーザー${otherUserId.substring(0, 8)}`,
+                    picture: null, // Don't expose Google profile picture
+                };
             }
 
             // Get item info if itemId exists
@@ -68,7 +66,12 @@ router.get('/conversations', async (req: Request, res: Response, next: NextFunct
                     item = {
                         name: itemData?.name || 'Unknown Item',
                         imageUrl: itemData?.imageUrl || '',
+                        exhibitorName: itemData?.exhibitorName || null,
                     };
+                    // Use exhibitorName as display name if available
+                    if (otherUser && itemData?.exhibitorName) {
+                        otherUser.name = itemData.exhibitorName;
+                    }
                 }
             }
 
@@ -144,14 +147,12 @@ router.get('/conversations/:id', async (req: Request, res: Response, next: NextF
         let otherUser = null;
         if (otherUserId) {
             const userDoc = await db().collection('users').doc(otherUserId).get();
-            if (userDoc.exists) {
-                const userData = userDoc.data();
-                otherUser = {
-                    id: otherUserId,
-                    name: userData?.name || 'Unknown',
-                    picture: userData?.picture || null,
-                };
-            }
+            // Use anonymous ID and default avatar for privacy
+            otherUser = {
+                id: otherUserId,
+                name: `ユーザー${otherUserId.substring(0, 8)}`,
+                picture: null, // Don't expose Google profile picture
+            };
         }
 
         // Get item info
@@ -163,7 +164,12 @@ router.get('/conversations/:id', async (req: Request, res: Response, next: NextF
                 item = {
                     name: itemData?.name || 'Unknown Item',
                     imageUrl: itemData?.imageUrl || '',
+                    exhibitorName: itemData?.exhibitorName || null,
                 };
+                // Use exhibitorName as display name if available
+                if (otherUser && itemData?.exhibitorName) {
+                    otherUser.name = itemData.exhibitorName;
+                }
             }
         }
 
