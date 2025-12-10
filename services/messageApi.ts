@@ -52,3 +52,11 @@ export async function reportMessage(data: {
         body: JSON.stringify(data),
     });
 }
+
+// 運営に連絡（新規会話を作成）
+export async function contactAdmin(): Promise<Conversation & { isNew: boolean }> {
+    return fetchJson(`${API_BASE}/contact-admin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+    });
+}

@@ -325,6 +325,69 @@ router.get('/unread-count', async (req: Request, res: Response, next: NextFuncti
     }
 });
 
+// Admin email for contact feature
+const ADMIN_EMAIL = process.env.NOTIFICATION_EMAIL || 'taishi14ki@gmail.com';
+
+// POST /api/messages/contact-admin - Start conversation with admin
+router.post('/contact-admin', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.uid;
+
+        // Find admin user by email
+        const adminSnapshot = await db()
+            .collection('users')
+            .where('email', '==', ADMIN_EMAIL)
+            .limit(1)
+            .get();
+
+        if (adminSnapshot.empty) {
+            return res.status(404).json({ error: '運営ユーザーが見つかりません' });
+        }
+
+        const adminDoc = adminSnapshot.docs[0];
+        const adminId = adminDoc.id;
+
+        if (userId === adminId) {
+            return res.status(400).json({ error: '運営自身には連絡できません' });
+        }
+
+        // Check if conversation already exists with admin (no itemId)
+        const existingSnapshot = await db()
+            .collection('conversations')
+            .where('participants', 'array-contains', userId)
+            .where('itemId', '==', null)
+            .get();
+
+        const existingConversation = existingSnapshot.docs.find(doc => {
+            const data = doc.data();
+            return data.participants.includes(adminId);
+        });
+
+        if (existingConversation) {
+            const data = convertTimestamps(existingConversation.data());
+            return res.json({ id: existingConversation.id, ...data, isNew: false });
+        }
+
+        // Create new conversation with admin
+        const newConversation = {
+            participants: [userId, adminId],
+            itemId: null,
+            lastMessage: '',
+            lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+
+        const docRef = await db().collection('conversations').add(newConversation);
+        const createdDoc = await docRef.get();
+        const createdData = convertTimestamps(createdDoc.data());
+
+        res.status(201).json({ id: docRef.id, ...createdData, isNew: true });
+    } catch (error) {
+        console.error('[Messages API] Error contacting admin:', error);
+        next(error);
+    }
+});
+
 // POST /api/messages/report - Report a message
 router.post('/report', [
     body('conversationId').notEmpty().isString(),
