@@ -44,9 +44,11 @@ export interface Item {
 // Googleサインインで取得するユーザー情報のインターフェース
 export interface User {
   id: string; // Google User ID
-  name: string;
+  name: string; // Original Google name (kept for reference)
   email: string;
-  picture?: string; // プロフィール画像のURL
+  picture?: string; // Original Google profile picture (kept for reference)
+  displayName?: string; // Custom display name set by user
+  displayPicture?: string; // Custom avatar URL set by user
 }
 
 // 通知のデータ構造

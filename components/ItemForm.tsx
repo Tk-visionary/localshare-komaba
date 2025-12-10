@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Item, ItemCategory, BoothArea } from '../types';
+import { Item, ItemCategory, BoothArea, User } from '../types';
 import CustomSelect from './CustomSelect';
 import * as api from '../services/itemApi';
+import * as profileApi from '../services/profileApi';
 
 type ItemFormData = Omit<Item, 'id' | 'postedAt' | 'userId' | 'imageUrl' | 'isSoldOut' | 'user'>;
 
@@ -25,7 +27,14 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [useDisplayName, setUseDisplayName] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Fetch user profile for displayName
+  const { data: profile } = useQuery<User>({
+    queryKey: ['profile'],
+    queryFn: () => profileApi.fetchProfile(),
+  });
 
   // カテゴリのオプション（アイコン付き）
   const categoryOptions = [
@@ -127,7 +136,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">商品名</label>
         <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ut-blue focus:border-ut-blue sm:text-sm" />
       </div>
-      
+
       <div>
         <div className="flex justify-between items-center mb-2">
           <label htmlFor="description" className="block text-sm font-medium text-gray-700">商品説明</label>
@@ -178,7 +187,7 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
         <input type="file" name="image" id="image" accept="image/*" onChange={handleImageChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-komaba-orange-light file:text-komaba-orange hover:file:bg-komaba-orange/40" />
         {(imagePreview) && <img src={imagePreview} alt="Preview" className="mt-4 h-40 w-40 object-cover rounded-lg shadow-md" />}
       </div>
-      
+
       <fieldset className="border border-gray-300 p-4 rounded-md">
         <legend className="text-sm font-medium text-gray-700 px-2">出店場所</legend>
         <div className="space-y-4">
@@ -202,7 +211,35 @@ const ItemForm: React.FC<ItemFormProps> = ({ onSubmit, isSubmitting, existingIte
 
       <div>
         <label htmlFor="exhibitorName" className="block text-sm font-medium text-gray-700">出店団体名</label>
-        <input type="text" name="exhibitorName" id="exhibitorName" value={formData.exhibitorName} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ut-blue focus:border-ut-blue sm:text-sm" />
+        <input
+          type="text"
+          name="exhibitorName"
+          id="exhibitorName"
+          value={formData.exhibitorName}
+          onChange={handleChange}
+          required
+          disabled={useDisplayName}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-ut-blue focus:border-ut-blue sm:text-sm disabled:bg-gray-100 disabled:text-gray-500"
+        />
+        {/* Checkbox to use profile displayName */}
+        {profile?.displayName && (
+          <label className="flex items-center gap-2 mt-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={useDisplayName}
+              onChange={(e) => {
+                setUseDisplayName(e.target.checked);
+                if (e.target.checked && profile.displayName) {
+                  setFormData(prev => ({ ...prev, exhibitorName: profile.displayName! }));
+                }
+              }}
+              className="w-4 h-4 text-komaba-orange rounded border-gray-300 focus:ring-komaba-orange"
+            />
+            <span className="text-sm text-gray-600">
+              プロフィールの表示名「{profile.displayName}」を使用
+            </span>
+          </label>
+        )}
       </div>
 
       <button ref={buttonRef} type="submit" disabled={isSubmitting} className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-komaba-orange hover:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ut-blue disabled:bg-komaba-orange/50 disabled:cursor-not-allowed" style={{ minHeight: '48px' }}>

@@ -49,11 +49,12 @@ router.get('/conversations', async (req: Request, res: Response, next: NextFunct
             let otherUser = null;
             if (otherUserId) {
                 const userDoc = await db().collection('users').doc(otherUserId).get();
-                // Use anonymous ID and default avatar for privacy
+                const userData = userDoc.exists ? userDoc.data() : null;
+                // Use displayName if set, otherwise anonymous ID
                 otherUser = {
                     id: otherUserId,
-                    name: `ユーザー${otherUserId.substring(0, 8)}`,
-                    picture: null, // Don't expose Google profile picture
+                    name: userData?.displayName || `ユーザー${otherUserId.substring(0, 8)}`,
+                    picture: userData?.displayPicture || null, // Only use custom avatar
                 };
             }
 
@@ -147,11 +148,12 @@ router.get('/conversations/:id', async (req: Request, res: Response, next: NextF
         let otherUser = null;
         if (otherUserId) {
             const userDoc = await db().collection('users').doc(otherUserId).get();
-            // Use anonymous ID and default avatar for privacy
+            const userData = userDoc.exists ? userDoc.data() : null;
+            // Use displayName if set, otherwise anonymous ID
             otherUser = {
                 id: otherUserId,
-                name: `ユーザー${otherUserId.substring(0, 8)}`,
-                picture: null, // Don't expose Google profile picture
+                name: userData?.displayName || `ユーザー${otherUserId.substring(0, 8)}`,
+                picture: userData?.displayPicture || null, // Only use custom avatar
             };
         }
 

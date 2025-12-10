@@ -12,6 +12,7 @@ const PostItemPage = lazy(() => import('./pages/PostItemPage'));
 const MyItemsPage = lazy(() => import('./pages/MyItemsPage'));
 const EditItemPage = lazy(() => import('./pages/EditItemPage'));
 const MessagesPage = lazy(() => import('./pages/MessagesPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 
 // Loading fallback component
@@ -50,6 +51,7 @@ function App() {
                     <Route path="/my-items" element={<MyItemsPage />} />
                     <Route path="/edit-item/:itemId" element={<EditItemPage />} />
                     <Route path="/messages" element={<MessagesPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
                   </Route>
                 </Routes>
               </Suspense>

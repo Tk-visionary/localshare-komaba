@@ -48,10 +48,10 @@ const Header: React.FC = () => {
                 <SmallSpinner />
               ) : currentUser ? (
                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center">
+                  <Link to="/profile" className="flex items-center hover:opacity-80 transition-opacity">
                     <img src={currentUser.picture} alt={currentUser.name} className="h-8 w-8 rounded-full" />
                     <span className="ml-2 text-sm font-medium">{currentUser.name}</span>
-                  </div>
+                  </Link>
                   <button
                     onClick={logout}
                     className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"

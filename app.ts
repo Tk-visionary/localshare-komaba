@@ -11,6 +11,7 @@ import uploadRoutes from './routes/upload.js';
 import itemRoutes from './routes/items.js';
 import aiRoutes from './routes/ai.js';
 import messageRoutes from './routes/messages.js';
+import profileRoutes from './routes/profile.js';
 import { authMiddleware } from './middleware/auth.js';
 
 // Only load .env files in development
@@ -127,6 +128,8 @@ app.use('/api/items', itemRoutes);
 app.use('/api/ai', authMiddleware, aiRoutes);
 // Messages routes (authentication is handled inside the router)
 app.use('/api/messages', messageRoutes);
+// Profile routes (authentication is handled inside the router)
+app.use('/api/profile', profileRoutes);
 
 // --- SPA fallback ---
 // Only serve index.html for non-file requests (excludes .js, .css, .svg, etc.)

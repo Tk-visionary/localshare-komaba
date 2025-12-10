@@ -1,6 +1,7 @@
 import React from 'react';
 import { Conversation } from '../types';
 import { timeSince } from '../utils/date';
+import Avatar from './Avatar';
 
 interface ConversationListProps {
     conversations: Conversation[];
@@ -41,21 +42,11 @@ const ConversationList: React.FC<ConversationListProps> = ({
                         }`}
                 >
                     {/* Avatar */}
-                    <div className="flex-shrink-0">
-                        {conversation.otherUser?.picture ? (
-                            <img
-                                src={conversation.otherUser.picture}
-                                alt={conversation.otherUser.name}
-                                className="w-12 h-12 rounded-full object-cover"
-                            />
-                        ) : (
-                            <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                                <span className="text-gray-600 text-lg">
-                                    {conversation.otherUser?.name?.charAt(0) || '?'}
-                                </span>
-                            </div>
-                        )}
-                    </div>
+                    <Avatar
+                        picture={conversation.otherUser?.picture}
+                        name={conversation.otherUser?.name}
+                        size="lg"
+                    />
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">

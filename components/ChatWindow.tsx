@@ -4,6 +4,7 @@ import { Conversation, Message } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { timeSince } from '../utils/date';
 import ReportModal from './ReportModal';
+import Avatar from './Avatar';
 import * as messageApi from '../services/messageApi';
 
 interface ChatWindowProps {
@@ -79,19 +80,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             {/* Header */}
             <div className="p-4 border-b border-gray-200 bg-white">
                 <div className="flex items-center gap-3">
-                    {conversation.otherUser?.picture ? (
-                        <img
-                            src={conversation.otherUser.picture}
-                            alt={conversation.otherUser.name}
-                            className="w-10 h-10 rounded-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-gray-600">
-                                {conversation.otherUser?.name?.charAt(0) || '?'}
-                            </span>
-                        </div>
-                    )}
+                    <Avatar
+                        picture={conversation.otherUser?.picture}
+                        name={conversation.otherUser?.name}
+                        size="md"
+                    />
                     <div>
                         <h2 className="font-semibold text-gray-900">
                             {conversation.otherUser?.name || 'Unknown User'}
