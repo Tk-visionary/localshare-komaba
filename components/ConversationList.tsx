@@ -74,7 +74,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                         </p>
 
                         {/* Unread badge */}
-                        {conversation.unreadCount && conversation.unreadCount > 0 && (
+                        {(conversation.unreadCount ?? 0) > 0 && (
                             <span className="inline-flex items-center justify-center w-5 h-5 text-xs bg-komaba-orange text-white rounded-full mt-1">
                                 {conversation.unreadCount}
                             </span>

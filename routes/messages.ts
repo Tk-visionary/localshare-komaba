@@ -79,21 +79,25 @@ router.get('/conversations', async (req: Request, res: Response, next: NextFunct
                 }
             }
 
-            // Count unread messages
-            const unreadSnapshot = await db()
+            // Count unread messages (simplified to avoid index requirement)
+            const allMessagesSnapshot = await db()
                 .collection('conversations')
                 .doc(doc.id)
                 .collection('messages')
-                .where('senderId', '!=', userId)
                 .where('read', '==', false)
                 .get();
+
+            // Filter to only count messages not sent by current user
+            const unreadCount = allMessagesSnapshot.docs.filter(
+                msgDoc => msgDoc.data().senderId !== userId
+            ).length;
 
             conversations.push({
                 id: doc.id,
                 ...data,
                 otherUser,
                 item,
-                unreadCount: unreadSnapshot.size,
+                unreadCount,
             } as Conversation);
         }
 
