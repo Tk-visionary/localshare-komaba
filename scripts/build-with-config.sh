@@ -21,6 +21,10 @@ cat firebase-client-config.json | grep -o '"authDomain":"[^"]*"' || echo "authDo
 
 echo ""
 echo "🏗️  Viteビルドを開始..."
-npm run build
+npx vite build
+
+echo ""
+echo "🏗️  サーバービルドを開始..."
+npx tsc --project tsconfig.server.json
 
 echo "✅ ビルド完了！"

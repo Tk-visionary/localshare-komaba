@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite & npm run server",
-    "build": "vite build && npx tsc --project tsconfig.server.json",
+    "build": "bash scripts/build-with-config.sh",
     "preview": "vite preview",
     "server": "tsx watch server.ts",
     "start": "node dist/server.js",
