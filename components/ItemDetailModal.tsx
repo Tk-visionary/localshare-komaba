@@ -27,6 +27,7 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
   const [applications, setApplications] = useState<PurchaseApplication[]>([]);
   const [isLoadingApplications, setIsLoadingApplications] = useState(false);
   const [userHasApplied, setUserHasApplied] = useState(false);
+  const [myApplication, setMyApplication] = useState<PurchaseApplication | null>(null);
 
   // Modal states
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
@@ -47,6 +48,7 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
     } else {
       setApplications([]);
       setUserHasApplied(false);
+      setMyApplication(null);
     }
     setCancelReason('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,11 +72,13 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
     try {
       const result = await itemApi.checkMyApplication(item.id);
       setUserHasApplied(result.hasApplied);
+      setMyApplication(result.application || null);
     } catch (error) {
       console.error('Error checking application status:', error);
       // Fallback to localStorage in case of error
       const appliedItems = JSON.parse(localStorage.getItem('appliedItems') || '[]');
       setUserHasApplied(appliedItems.includes(item.id));
+      setMyApplication(null);
     }
   };
 
@@ -323,6 +327,38 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
                 ) : (
                   <p className="text-sm text-gray-500 italic">まだ購入申請はありません</p>
                 )}
+              </div>
+            )}
+
+            {/* 自分の申請情報 (申請者本人のみ表示) */}
+            {!isOwner && userHasApplied && myApplication && (
+              <div className="mb-6 border-t border-gray-100 pt-6">
+                <h3 className="text-md font-bold text-gray-800 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  あなたの申請
+                </h3>
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar picture={myApplication.applicantPicture} name={myApplication.applicantName} size="sm" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">{myApplication.applicantName}</p>
+                        <p className="text-xs text-gray-500">申請日: {timeSince(myApplication.createdAt)}</p>
+                      </div>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full border ${myApplication.status === 'pending' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
+                      myApplication.status === 'approved' ? 'bg-green-50 text-green-600 border-green-200' :
+                        'bg-gray-50 text-gray-500 border-gray-200'
+                      }`}>
+                      {myApplication.status === 'pending' ? '申請中' : myApplication.status === 'approved' ? '承認済み' : '却下'}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-gray-600">
+                    出品者からの連絡をお待ちください。質問がある場合は「質問する」ボタンからメッセージを送れます。
+                  </p>
+                </div>
               </div>
             )}
 
