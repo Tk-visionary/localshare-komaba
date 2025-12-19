@@ -96,14 +96,14 @@ router.post('/', authMiddleware, itemValidationRules, async (req: Request<{}, {}
     const userData = userDoc.exists ? userDoc.data() : null;
 
     const newItem = {
-        ...itemData,
-        userId,
-        user: {
-          name: userData?.name || 'Unknown User',
-          picture: userData?.picture || null,
-        },
-        postedAt: admin.firestore.FieldValue.serverTimestamp(),
-        isSoldOut: false,
+      ...itemData,
+      userId,
+      user: {
+        name: userData?.name || 'Unknown User',
+        picture: userData?.picture || null,
+      },
+      postedAt: admin.firestore.FieldValue.serverTimestamp(),
+      isSoldOut: false,
     };
 
     const docRef = await db().collection('items').add(newItem);
@@ -131,67 +131,172 @@ const updateItemValidationRules = [
 ];
 
 router.put('/:id', authMiddleware, updateItemValidationRules, async (req: Request<{ id: string }, {}, Partial<Item>>, res: Response, next: NextFunction) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ error: { message: 'Validation failed', details: errors.array() } });
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: { message: 'Validation failed', details: errors.array() } });
+  }
+  try {
+    const { id } = req.params;
+    const itemRef = db().collection('items').doc(id);
+    const doc = await itemRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Item not found' });
     }
-    try {
-        const { id } = req.params;
-        const itemRef = db().collection('items').doc(id);
-        const doc = await itemRef.get();
 
-        if (!doc.exists) {
-            return res.status(404).json({ error: 'Item not found' });
-        }
-
-        // Ownership check
-        if (doc.data()!.userId !== req.user!.uid) {
-            return res.status(403).json({ error: { message: 'Forbidden: You do not own this item.' } });
-        }
-
-        // Only include fields that are present in the request body
-        const cleanedData: { [key: string]: any } = {};
-        const allowedFields = ['name', 'description', 'category', 'price', 'imageUrl', 'boothArea', 'boothDetail', 'exhibitorName', 'isSoldOut'];
-        for (const field of allowedFields) {
-            if (req.body[field as keyof Item] !== undefined) {
-                cleanedData[field] = req.body[field as keyof Item];
-            }
-        }
-
-        if (Object.keys(cleanedData).length === 0) {
-            return res.status(400).json({ error: 'No fields to update provided.' });
-        }
-
-        await itemRef.update(cleanedData);
-
-        const updatedDoc = await itemRef.get();
-        const updatedData = convertTimestamps(updatedDoc.data());
-        res.json({ id: updatedDoc.id, ...updatedData } as Item);
-    } catch (error) {
-        next(error);
+    // Ownership check
+    if (doc.data()!.userId !== req.user!.uid) {
+      return res.status(403).json({ error: { message: 'Forbidden: You do not own this item.' } });
     }
+
+    // Only include fields that are present in the request body
+    const cleanedData: { [key: string]: any } = {};
+    const allowedFields = ['name', 'description', 'category', 'price', 'imageUrl', 'boothArea', 'boothDetail', 'exhibitorName', 'isSoldOut'];
+    for (const field of allowedFields) {
+      if (req.body[field as keyof Item] !== undefined) {
+        cleanedData[field] = req.body[field as keyof Item];
+      }
+    }
+
+    if (Object.keys(cleanedData).length === 0) {
+      return res.status(400).json({ error: 'No fields to update provided.' });
+    }
+
+    await itemRef.update(cleanedData);
+
+    const updatedDoc = await itemRef.get();
+    const updatedData = convertTimestamps(updatedDoc.data());
+    res.json({ id: updatedDoc.id, ...updatedData } as Item);
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.delete('/:id', authMiddleware, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
-    try {
-        const { id } = req.params;
-        const itemRef = db().collection('items').doc(id);
-        const doc = await itemRef.get();
+  try {
+    const { id } = req.params;
+    const itemRef = db().collection('items').doc(id);
+    const doc = await itemRef.get();
 
-        if (!doc.exists) {
-            return res.status(404).json({ error: 'Item not found' });
-        }
-
-        // Ownership check
-        if (doc.data()!.userId !== req.user!.uid) {
-            return res.status(403).json({ error: { message: 'Forbidden: You do not own this item.' } });
-        }
-
-        await itemRef.delete();
-        res.status(204).end();
-    } catch (error) {
-        next(error);
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Item not found' });
     }
+
+    // Ownership check
+    if (doc.data()!.userId !== req.user!.uid) {
+      return res.status(403).json({ error: { message: 'Forbidden: You do not own this item.' } });
+    }
+
+    await itemRef.delete();
+    res.status(204).end();
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+// Purchase Application
+
+// POST /:id/apply
+router.post('/:id/apply', authMiddleware, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const applicantId = req.user!.uid;
+
+    const itemRef = db().collection('items').doc(id);
+
+    await db().runTransaction(async (transaction) => {
+      const itemDoc = await transaction.get(itemRef);
+
+      if (!itemDoc.exists) {
+        throw new Error('Item not found');
+      }
+
+      const itemData = itemDoc.data()!;
+
+      // Cannot apply to own item
+      if (itemData.userId === applicantId) {
+        throw new Error('Cannot apply to your own item');
+      }
+
+      // Check if already applied (Optional: could rely on client state, but good to check)
+      // For now, simpler to just allow multiple "pings" or just add without check if that's acceptable.
+      // But typically we want to prevent spam. Let's check subcollection.
+      const existingApplicationQuery = await transaction.get(
+        itemRef.collection('applications').where('applicantId', '==', applicantId)
+      );
+
+      if (!existingApplicationQuery.empty) {
+        throw new Error('Already applied');
+      }
+
+      const userRef = db().collection('users').doc(applicantId);
+      const userDoc = await transaction.get(userRef);
+      const userData = userDoc.exists ? userDoc.data() : null;
+
+      const applicationData = {
+        itemId: id,
+        applicantId,
+        applicantName: userData?.name || 'Unknown User',
+        applicantPicture: userData?.picture || null,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        status: 'pending',
+      };
+
+      const applicationRef = itemRef.collection('applications').doc();
+      transaction.set(applicationRef, applicationData);
+
+      // Update item with flag
+      transaction.update(itemRef, {
+        hasApplication: true,
+        lastApplicationAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    });
+
+    res.status(201).json({ message: 'Application submitted successfully' });
+
+  } catch (error: any) {
+    if (error.message === 'Item not found') {
+      res.status(404).json({ error: 'Item not found' });
+    } else if (error.message === 'Cannot apply to your own item') {
+      res.status(400).json({ error: error.message });
+    } else if (error.message === 'Already applied') {
+      res.status(409).json({ error: error.message });
+    } else {
+      next(error);
+    }
+  }
+});
+
+// GET /:id/applications (Owner only)
+router.get('/:id/applications', authMiddleware, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.uid;
+
+    const itemRef = db().collection('items').doc(id);
+    const itemDoc = await itemRef.get();
+
+    if (!itemDoc.exists) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+
+    // Only owner can view applications
+    if (itemDoc.data()!.userId !== userId) {
+      return res.status(403).json({ error: 'Forbidden: Only the owner can view applications.' });
+    }
+
+    const applicationsSnapshot = await itemRef.collection('applications').orderBy('createdAt', 'desc').get();
+    const applications = applicationsSnapshot.docs.map(doc => {
+      const data = convertTimestamps(doc.data());
+      return { id: doc.id, ...data };
+    });
+
+    res.json(applications);
+
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;

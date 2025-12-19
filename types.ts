@@ -39,6 +39,19 @@ export interface Item {
     name: string;
     picture?: string;
   } | null;
+  hasApplication?: boolean; // 購入申請があるかどうか
+  lastApplicationAt?: Date | string; // 最新の購入申請日時
+}
+
+// 購入申請のデータ構造
+export interface PurchaseApplication {
+  id: string; // Firestore ID
+  itemId: string;
+  applicantId: string;
+  applicantName: string; // 申請者名 (プライバシー保護のため、APIでは所有者以外には隠すか、クライアント側で制御)
+  applicantPicture?: string;
+  createdAt: Date | string;
+  status: 'pending' | 'approved' | 'rejected'; // 将来的な拡張のため
 }
 
 // Googleサインインで取得するユーザー情報のインターフェース

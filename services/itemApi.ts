@@ -7,7 +7,7 @@ const API_BASE_URL = '/api';
 const uploadImage = async (imageFile: File): Promise<{ url: string }> => {
   const formData = new FormData();
   formData.append('image', imageFile);
-  
+
   // Use a different endpoint for upload, not under /api
   return fetchJson('/upload', {
     method: 'POST',
@@ -32,11 +32,11 @@ export const createItem = async (itemData: Omit<Item, 'id' | 'postedAt' | 'image
   const { url: imageUrl } = await uploadImage(imageFile);
 
   // 2. Prepare the full item data, including the new image URL
-  const fullItemData = { 
-    ...itemData, 
+  const fullItemData = {
+    ...itemData,
     imageUrl,
     exhibitorName,
-    isSoldOut: false 
+    isSoldOut: false
   };
 
   // 3. Post the complete item data to the items API
@@ -96,6 +96,19 @@ export interface AIUsageResponse {
   used: number;
   limit: number;
 }
+
+// Purchase Application
+import { PurchaseApplication } from '../types';
+
+export const applyForPurchase = async (itemId: string): Promise<void> => {
+  return fetchJson(`${API_BASE_URL}/items/${itemId}/apply`, {
+    method: 'POST',
+  });
+};
+
+export const fetchPurchaseApplications = async (itemId: string): Promise<PurchaseApplication[]> => {
+  return fetchJson(`${API_BASE_URL}/items/${itemId}/applications`);
+};
 
 export const getAIUsage = async (): Promise<AIUsageResponse> => {
   return fetchJson(`${API_BASE_URL}/ai/usage`);
