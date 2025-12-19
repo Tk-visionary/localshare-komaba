@@ -26,6 +26,11 @@ runConfig:
       availability:
         - BUILD
         - RUNTIME
+    # Override Firebase System's auto-injected FIREBASE_WEBAPP_CONFIG with our updated secret
+    - variable: FIREBASE_WEBAPP_CONFIG
+      secret: FIREBASE_CLIENT_CONFIG
+      availability:
+        - BUILD
     # Resend API for email notifications (reports)
     - variable: RESEND_API_KEY
       secret: RESEND_API_KEY
