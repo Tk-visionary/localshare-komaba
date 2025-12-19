@@ -6,15 +6,12 @@ echo "🔥 Firebase クライアント設定を準備中..."
 # Debug: 環境変数の確認
 echo "📊 デバッグ: 環境変数の確認"
 
-# Workaround: If FIREBASE_CLIENT_CONFIG is not set, fetch it directly from Secret Manager
+# Workaround: If FIREBASE_CLIENT_CONFIG is not set, use hardcoded config with new API key
+# Note: Firebase client API keys are meant to be public (used in browser), so this is acceptable
 if [ -z "$FIREBASE_CLIENT_CONFIG" ]; then
-  echo "  FIREBASE_CLIENT_CONFIG: 未設定 - Secret Managerから取得を試みます..."
-  FIREBASE_CLIENT_CONFIG=$(gcloud secrets versions access latest --secret=FIREBASE_CLIENT_CONFIG --project=localshare-komaba-54c0d 2>/dev/null || echo "")
-  if [ -n "$FIREBASE_CLIENT_CONFIG" ]; then
-    echo "  ✅ Secret Managerから取得成功"
-  else
-    echo "  ⚠️ Secret Managerから取得失敗"
-  fi
+  echo "  FIREBASE_CLIENT_CONFIG: 未設定 - ハードコードされた設定を使用します..."
+  FIREBASE_CLIENT_CONFIG='{"apiKey":"AIzaSyDPP9SpoyKHL57mA5hvnYYgYMYH3uUyK6Q","authDomain":"localshare-komaba-54c0d.firebaseapp.com","projectId":"localshare-komaba-54c0d","storageBucket":"localshare-komaba-54c0d.firebasestorage.app","messagingSenderId":"371696877911","appId":"1:371696877911:web:d29c5fc0c892242741fe12","measurementId":"G-87V6HZ6G17"}'
+  echo "  ✅ ハードコード設定を適用"
 else
   echo "  FIREBASE_CLIENT_CONFIG: 設定済み (長さ: ${#FIREBASE_CLIENT_CONFIG})"
 fi
