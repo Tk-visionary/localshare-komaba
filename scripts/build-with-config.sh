@@ -3,6 +3,19 @@ set -e
 
 echo "🔥 Firebase クライアント設定を準備中..."
 
+# Debug: 環境変数の確認
+echo "📊 デバッグ: 環境変数の確認"
+if [ -n "$FIREBASE_CLIENT_CONFIG" ]; then
+  echo "  FIREBASE_CLIENT_CONFIG: 設定済み (長さ: ${#FIREBASE_CLIENT_CONFIG})"
+else
+  echo "  FIREBASE_CLIENT_CONFIG: 未設定"
+fi
+if [ -n "$FIREBASE_WEBAPP_CONFIG" ]; then
+  echo "  FIREBASE_WEBAPP_CONFIG: 設定済み (長さ: ${#FIREBASE_WEBAPP_CONFIG})"
+else
+  echo "  FIREBASE_WEBAPP_CONFIG: 未設定"
+fi
+
 # Secret Managerから設定を取得してファイルに書き出す
 if [ -n "$FIREBASE_CLIENT_CONFIG" ]; then
   echo "✅ FIREBASE_CLIENT_CONFIG を使用（本番環境）"
