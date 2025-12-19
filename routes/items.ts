@@ -321,6 +321,38 @@ router.get('/:id/applications', authMiddleware, async (req: Request<{ id: string
   }
 });
 
+// GET /:id/my-application - Check if current user has applied
+router.get('/:id/my-application', authMiddleware, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.uid;
+
+    const itemRef = db().collection('items').doc(id);
+    const itemDoc = await itemRef.get();
+
+    if (!itemDoc.exists) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+
+    // Check if user has an application
+    const applicationsQuery = await itemRef.collection('applications')
+      .where('applicantId', '==', userId)
+      .limit(1)
+      .get();
+
+    if (applicationsQuery.empty) {
+      res.json({ hasApplied: false });
+    } else {
+      const appDoc = applicationsQuery.docs[0];
+      const data = convertTimestamps(appDoc.data());
+      res.json({ hasApplied: true, application: { id: appDoc.id, ...data } });
+    }
+
+  } catch (error) {
+    next(error);
+  }
+});
+
 // DELETE /:id/apply - Cancel own application
 router.delete('/:id/apply', authMiddleware, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {

@@ -110,6 +110,15 @@ export const fetchPurchaseApplications = async (itemId: string): Promise<Purchas
   return fetchJson(`${API_BASE_URL}/items/${itemId}/applications`);
 };
 
+export interface MyApplicationResponse {
+  hasApplied: boolean;
+  application?: PurchaseApplication;
+}
+
+export const checkMyApplication = async (itemId: string): Promise<MyApplicationResponse> => {
+  return fetchJson(`${API_BASE_URL}/items/${itemId}/my-application`);
+};
+
 export const cancelPurchaseApplication = async (itemId: string, reason?: string): Promise<void> => {
   return fetchJson(`${API_BASE_URL}/items/${itemId}/apply`, {
     method: 'DELETE',

@@ -66,17 +66,15 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
   };
 
   const checkUserApplication = async () => {
-    // For non-owners, we check if they have applied by trying to fetch applications
-    // Since the endpoint is owner-only, we need another approach.
-    // Simplest: Try to apply and catch "Already applied" error, but that's bad UX.
-    // Better: Add a new endpoint or use client-side state. For now, let's use a simple approach:
-    // We'll just show the button and let the backend reject with "Already applied".
-    // But for better UX, we can store applied items in localStorage for this session.
-    const appliedItems = JSON.parse(localStorage.getItem('appliedItems') || '[]');
-    if (item && appliedItems.includes(item.id)) {
-      setUserHasApplied(true);
-    } else {
-      setUserHasApplied(false);
+    if (!item) return;
+    try {
+      const result = await itemApi.checkMyApplication(item.id);
+      setUserHasApplied(result.hasApplied);
+    } catch (error) {
+      console.error('Error checking application status:', error);
+      // Fallback to localStorage in case of error
+      const appliedItems = JSON.parse(localStorage.getItem('appliedItems') || '[]');
+      setUserHasApplied(appliedItems.includes(item.id));
     }
   };
 
