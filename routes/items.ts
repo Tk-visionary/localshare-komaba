@@ -378,20 +378,20 @@ router.delete('/:id/apply', authMiddleware, async (req: Request<{ id: string }>,
         throw new Error('Application not found');
       }
 
+      // Get all applications to count them (before deleting)
+      const allApplicationsQuery = await transaction.get(
+        itemRef.collection('applications')
+      );
+
+      // Count total applications and how many we're deleting
+      const totalApplications = allApplicationsQuery.docs.length;
+      const applicationsToDelete = applicationsQuery.docs.length;
+      const remainingCount = totalApplications - applicationsToDelete;
+
       // Delete the application(s) - should be only one per user
       applicationsQuery.docs.forEach(doc => {
         transaction.delete(doc.ref);
       });
-
-      // Check if there are other applications remaining
-      const remainingApplicationsQuery = await transaction.get(
-        itemRef.collection('applications').limit(2) // We deleted ours, check if others exist
-      );
-
-      // Count applications excluding the one we just deleted
-      const remainingCount = remainingApplicationsQuery.docs.filter(
-        doc => doc.data().applicantId !== applicantId
-      ).length;
 
       // Update item flag if no applications remain
       if (remainingCount === 0) {
