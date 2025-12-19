@@ -85,6 +85,11 @@ const MyItemsPage: React.FC = () => {
     setSelectedItem(null);
   };
 
+  const handleItemUpdate = () => {
+    queryClient.invalidateQueries({ queryKey: ['items', currentUser?.id] });
+    queryClient.invalidateQueries({ queryKey: ['items'] }); // Also update main items list
+  };
+
   if (isLoading) return <LoadingSpinner />;
   if (isError) return <div className="text-center text-red-500 mt-8">商品の読み込みに失敗しました: {error.message}</div>;
 
@@ -121,6 +126,7 @@ const MyItemsPage: React.FC = () => {
         item={selectedItem}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        onItemUpdate={handleItemUpdate}
       />
 
       <ConfirmModal

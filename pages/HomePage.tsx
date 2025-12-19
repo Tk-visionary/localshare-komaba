@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../services/itemApi';
 import { Item, ItemCategory } from '../types';
 import ItemCard from '../components/ItemCard';
@@ -7,6 +7,7 @@ import ItemDetailModal from '../components/ItemDetailModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const HomePage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [priceFilter, setPriceFilter] = useState<string>('all');
@@ -22,16 +23,20 @@ const HomePage: React.FC = () => {
     queryFn: () => api.fetchItems(),
   });
 
+  const handleItemUpdate = () => {
+    queryClient.invalidateQueries({ queryKey: ['items'] });
+  };
+
   const filteredItems = useMemo(() => {
     let result = items.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (item.user && item.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.user && item.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
       const matchesPrice = priceFilter === 'all' || (priceFilter === 'free' && item.price === 0);
       const matchesAvailability = availabilityFilter === 'all' ||
-                                   (availabilityFilter === 'available' && !item.isSoldOut) ||
-                                   (availabilityFilter === 'soldOut' && item.isSoldOut);
+        (availabilityFilter === 'available' && !item.isSoldOut) ||
+        (availabilityFilter === 'soldOut' && item.isSoldOut);
       return matchesSearch && matchesCategory && matchesPrice && matchesAvailability;
     });
 
@@ -129,7 +134,7 @@ const HomePage: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
+
         <div className="flex flex-col md:flex-row md:space-x-8 space-y-6 md:space-y-0 md:items-start">
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-gray-700">カテゴリ</h3>
@@ -138,30 +143,28 @@ const HomePage: React.FC = () => {
                 <button
                   key={value}
                   onClick={() => setCategoryFilter(value)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${
-                    categoryFilter === value 
-                      ? 'bg-komaba-orange text-white shadow-md' 
-                      : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
-                  }`}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${categoryFilter === value
+                    ? 'bg-komaba-orange text-white shadow-md'
+                    : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
+                    }`}
                 >
                   {label}
                 </button>
               ))}
             </div>
           </div>
-          
+
           <div className="space-y-3">
-             <h3 className="text-sm font-medium text-gray-700">価格</h3>
+            <h3 className="text-sm font-medium text-gray-700">価格</h3>
             <div className="flex flex-wrap gap-2">
               {priceOptions.map(({ value, label }) => (
                 <button
                   key={value}
                   onClick={() => setPriceFilter(value)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${
-                    priceFilter === value
-                      ? 'bg-komaba-orange text-white shadow-md'
-                      : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
-                  }`}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${priceFilter === value
+                    ? 'bg-komaba-orange text-white shadow-md'
+                    : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
+                    }`}
                 >
                   {label}
                 </button>
@@ -170,17 +173,16 @@ const HomePage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-             <h3 className="text-sm font-medium text-gray-700">在庫状況</h3>
+            <h3 className="text-sm font-medium text-gray-700">在庫状況</h3>
             <div className="flex flex-wrap gap-2">
               {availabilityOptions.map(({ value, label }) => (
                 <button
                   key={value}
                   onClick={() => setAvailabilityFilter(value)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${
-                    availabilityFilter === value
-                      ? 'bg-komaba-orange text-white shadow-md'
-                      : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
-                  }`}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${availabilityFilter === value
+                    ? 'bg-komaba-orange text-white shadow-md'
+                    : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
+                    }`}
                 >
                   {label}
                 </button>
@@ -189,17 +191,16 @@ const HomePage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-             <h3 className="text-sm font-medium text-gray-700">並び替え</h3>
+            <h3 className="text-sm font-medium text-gray-700">並び替え</h3>
             <div className="flex flex-wrap gap-2">
               {sortOptions.map(({ value, label }) => (
                 <button
                   key={value}
                   onClick={() => setSortOrder(value)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${
-                    sortOrder === value
-                      ? 'bg-komaba-orange text-white shadow-md'
-                      : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
-                  }`}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 ${sortOrder === value
+                    ? 'bg-komaba-orange text-white shadow-md'
+                    : 'bg-komaba-orange-light text-komaba-orange hover:brightness-105'
+                    }`}
                 >
                   {label}
                 </button>
@@ -230,6 +231,7 @@ const HomePage: React.FC = () => {
         item={selectedItem}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        onItemUpdate={handleItemUpdate}
       />
 
       {/* 公式マップへのフローティングボタン */}

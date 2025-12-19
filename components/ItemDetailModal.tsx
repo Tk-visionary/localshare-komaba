@@ -14,9 +14,10 @@ interface ItemDetailModalProps {
   item: Item | null;
   isOpen: boolean;
   onClose: () => void;
+  onItemUpdate?: () => void; // Optional callback to refresh item list
 }
 
-const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose }) => {
+const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose, onItemUpdate }) => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [isStartingChat, setIsStartingChat] = useState(false);
@@ -137,13 +138,21 @@ const ItemDetailModal: React.FC<ItemDetailModalProps> = ({ item, isOpen, onClose
       const newAppliedItems = appliedItems.filter((id: string) => id !== item.id);
       localStorage.setItem('appliedItems', JSON.stringify(newAppliedItems));
       setUserHasApplied(false);
+      setMyApplication(null);
       setShowCancelModal(false);
       setCancelReason('');
+      // Close modal to force parent to refresh item list
+      onClose();
+      // Trigger item refresh if callback provided
+      if (onItemUpdate) {
+        onItemUpdate();
+      }
     } catch (error: any) {
       console.error('Error cancelling:', error);
       if (error.error === 'Application not found') {
         toast.error('申請が見つかりませんでした');
         setUserHasApplied(false);
+        setMyApplication(null);
       } else {
         toast.error('取り消しに失敗しました');
       }
