@@ -110,6 +110,14 @@ export const fetchPurchaseApplications = async (itemId: string): Promise<Purchas
   return fetchJson(`${API_BASE_URL}/items/${itemId}/applications`);
 };
 
+export const cancelPurchaseApplication = async (itemId: string, reason?: string): Promise<void> => {
+  return fetchJson(`${API_BASE_URL}/items/${itemId}/apply`, {
+    method: 'DELETE',
+    body: JSON.stringify({ reason }),
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
 export const getAIUsage = async (): Promise<AIUsageResponse> => {
   return fetchJson(`${API_BASE_URL}/ai/usage`);
 };

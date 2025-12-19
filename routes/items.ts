@@ -25,6 +25,28 @@ const convertTimestamps = (data: any): any => {
     }
   }
 
+  // Handle lastApplicationAt timestamp
+  if (converted.lastApplicationAt) {
+    if (typeof converted.lastApplicationAt.toDate === 'function') {
+      converted.lastApplicationAt = converted.lastApplicationAt.toDate().toISOString();
+    } else if (typeof converted.lastApplicationAt === 'string') {
+      // Already a string, keep as is
+      converted.lastApplicationAt = converted.lastApplicationAt;
+    } else {
+      // Remove invalid timestamp
+      delete converted.lastApplicationAt;
+    }
+  }
+
+  // Handle createdAt timestamp (for applications)
+  if (converted.createdAt) {
+    if (typeof converted.createdAt.toDate === 'function') {
+      converted.createdAt = converted.createdAt.toDate().toISOString();
+    } else if (typeof converted.createdAt === 'string') {
+      converted.createdAt = converted.createdAt;
+    }
+  }
+
   return converted;
 };
 
@@ -296,6 +318,73 @@ router.get('/:id/applications', authMiddleware, async (req: Request<{ id: string
 
   } catch (error) {
     next(error);
+  }
+});
+
+// DELETE /:id/apply - Cancel own application
+router.delete('/:id/apply', authMiddleware, async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const applicantId = req.user!.uid;
+    const { reason } = req.body; // reason is optional, for logging/analytics
+
+    const itemRef = db().collection('items').doc(id);
+
+    await db().runTransaction(async (transaction) => {
+      const itemDoc = await transaction.get(itemRef);
+
+      if (!itemDoc.exists) {
+        throw new Error('Item not found');
+      }
+
+      // Find the user's application
+      const applicationsQuery = await transaction.get(
+        itemRef.collection('applications').where('applicantId', '==', applicantId)
+      );
+
+      if (applicationsQuery.empty) {
+        throw new Error('Application not found');
+      }
+
+      // Delete the application(s) - should be only one per user
+      applicationsQuery.docs.forEach(doc => {
+        transaction.delete(doc.ref);
+      });
+
+      // Check if there are other applications remaining
+      const remainingApplicationsQuery = await transaction.get(
+        itemRef.collection('applications').limit(2) // We deleted ours, check if others exist
+      );
+
+      // Count applications excluding the one we just deleted
+      const remainingCount = remainingApplicationsQuery.docs.filter(
+        doc => doc.data().applicantId !== applicantId
+      ).length;
+
+      // Update item flag if no applications remain
+      if (remainingCount === 0) {
+        transaction.update(itemRef, {
+          hasApplication: false,
+          lastApplicationAt: admin.firestore.FieldValue.delete()
+        });
+      }
+
+      // Log the cancellation reason (optional - could store in a separate collection for analytics)
+      if (reason) {
+        console.log(`[Application Cancelled] Item: ${id}, User: ${applicantId}, Reason: ${reason}`);
+      }
+    });
+
+    res.status(200).json({ message: 'Application cancelled successfully' });
+
+  } catch (error: any) {
+    if (error.message === 'Item not found') {
+      res.status(404).json({ error: 'Item not found' });
+    } else if (error.message === 'Application not found') {
+      res.status(404).json({ error: 'Application not found' });
+    } else {
+      next(error);
+    }
   }
 });
 
