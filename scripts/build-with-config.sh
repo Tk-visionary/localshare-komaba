@@ -5,11 +5,20 @@ echo "🔥 Firebase クライアント設定を準備中..."
 
 # Debug: 環境変数の確認
 echo "📊 デバッグ: 環境変数の確認"
-if [ -n "$FIREBASE_CLIENT_CONFIG" ]; then
-  echo "  FIREBASE_CLIENT_CONFIG: 設定済み (長さ: ${#FIREBASE_CLIENT_CONFIG})"
+
+# Workaround: If FIREBASE_CLIENT_CONFIG is not set, fetch it directly from Secret Manager
+if [ -z "$FIREBASE_CLIENT_CONFIG" ]; then
+  echo "  FIREBASE_CLIENT_CONFIG: 未設定 - Secret Managerから取得を試みます..."
+  FIREBASE_CLIENT_CONFIG=$(gcloud secrets versions access latest --secret=FIREBASE_CLIENT_CONFIG --project=localshare-komaba-54c0d 2>/dev/null || echo "")
+  if [ -n "$FIREBASE_CLIENT_CONFIG" ]; then
+    echo "  ✅ Secret Managerから取得成功"
+  else
+    echo "  ⚠️ Secret Managerから取得失敗"
+  fi
 else
-  echo "  FIREBASE_CLIENT_CONFIG: 未設定"
+  echo "  FIREBASE_CLIENT_CONFIG: 設定済み (長さ: ${#FIREBASE_CLIENT_CONFIG})"
 fi
+
 if [ -n "$FIREBASE_WEBAPP_CONFIG" ]; then
   echo "  FIREBASE_WEBAPP_CONFIG: 設定済み (長さ: ${#FIREBASE_WEBAPP_CONFIG})"
 else
